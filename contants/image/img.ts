@@ -1,0 +1,11 @@
+export const logo = require("../../assets/images/log.png");
+export const fashionshop1 = require("../../assets/images/part1.png");
+export const fashionshop2 = require("../../assets/images/part2.png");
+export const fashionshop3 = require("../../assets/images/part3.png");
+export const ggImag = require("../../assets/images/Google.png");
+export const facebookImag = require("../../assets/images/Facebook.png");
+export const appleImag = require("../../assets/images/Apple.png");
+export const special = require("../../assets/images/Rectangle56.png");
+export const papal = require("../../assets/images/paypal.png");
+export const visa = require("../../assets/images/visa.png");
+export const maestro = require("../../assets/images/maestro.png");
