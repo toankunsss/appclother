@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "527712290787",
+    "project_id": "stylish-e26cd",
+    "storage_bucket": "stylish-e26cd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:527712290787:android:8dc7ae83e358410aa8c2d6",
+        "android_client_info": {
+          "package_name": "com.anonymousssss.clotherApp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "527712290787-0jfuofloms1qihc0v905q82nsinuaqhv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB4orjE-1VYvqZFcGlxV_GbHyHQUr069lM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "527712290787-0jfuofloms1qihc0v905q82nsinuaqhv.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "527712290787-alpp26kfqf6u8tpqda9en9ekfegnfnj1.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.anonymousssss.clotherApp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

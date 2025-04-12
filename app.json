@@ -2,20 +2,34 @@
   "expo": {
     "name": "clotherApp",
     "slug": "clotherApp",
+    "owner": "vantoankunsss",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "",
-    "scheme": "myapp",
+    "scheme": "com.yourapp.auth",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "bundleIdentifier": "com.anonymousssss.clotherApp"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.anonymousssss.clotherApp",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": {
+            "scheme": "myapp"
+          },
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ],
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "bundler": "metro",

@@ -15,6 +15,18 @@ export const getProducts = async () => {
   }
 };
 
+export const getProductById = async (productId) => {
+  try {
+    const response = await BASE_URL.get(`/products/${productId}`);
+    if (response.data.length === 0) {
+      throw new Error("Không tìm thấy sản phẩm với ID đã cho.");
+    }
+    return response.data;
+  } catch (error) {
+    console.error(`Lỗi khi lấy sản phẩm với ID ${productId}:`, error);
+    throw error;
+  }
+};
 // Get categories
 export const getCategories = async () => {
   try {

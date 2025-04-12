@@ -13,7 +13,7 @@ const HEIGHT = Dimensions.get("window").height;
 import ButtonArrow from "./ButtonArrow";
 const postSale = ({ img, sale_off, describe }: any) => {
   return (
-    <TouchableOpacity style={{ marginRight: 10 }}>
+    <View style={{ marginRight: 10 }}>
       <ImageBackground
         source={{ uri: img }}
         style={{
@@ -34,7 +34,7 @@ const postSale = ({ img, sale_off, describe }: any) => {
         </Text>
         <ButtonArrow title="Shop Now" backgroundColor="" />
       </ImageBackground>
-    </TouchableOpacity>
+    </View>
   );
 };
 

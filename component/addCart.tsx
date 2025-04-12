@@ -8,19 +8,21 @@ interface AddCartProps {
   product: any;
   selectedColor: string | null;
   selectedSize: string | null;
+  onAddSuccess?: (event: any) => void;
 }
 
-const AddCart = ({
+const AddCart: React.FC<AddCartProps> = ({
   stock,
   product,
   selectedColor,
   selectedSize,
-}: AddCartProps) => {
+  onAddSuccess,
+}) => {
   const [quantity, setQuantity] = useState(1);
   const { addToCart } = useCart();
   const { user } = useAuth();
 
-  const handleAddToCart = async () => {
+  const handleAddToCart = async (event: any) => {
     if (
       product.sizes &&
       product.sizes.length > 0 &&
@@ -55,7 +57,7 @@ const AddCart = ({
       size: selectedSize || undefined,
       color: selectedColor || undefined,
       user_id: user?.uid || "",
-      product_id: product.product_id,
+      product_id: product.id,
       added_at: new Date().toISOString(),
     };
 
@@ -64,6 +66,7 @@ const AddCart = ({
         throw new Error("User not logged in");
       }
       await addToCart(cartItem);
+      onAddSuccess?.(event);
       console.log("Added to cart:", cartItem);
     } catch (error) {
       Alert.alert("Lỗi", "Không thể thêm vào giỏ hàng. Vui lòng thử lại!");
@@ -104,7 +107,10 @@ const AddCart = ({
       </View>
       <TouchableOpacity
         style={[styles.addButton, stock === 0 && styles.disabledButton]}
-        onPress={handleAddToCart}
+        onPress={(event) => {
+          const { pageX, pageY } = event.nativeEvent;
+          handleAddToCart({ locationX: pageX, locationY: pageY });
+        }}
         disabled={stock === 0}
       >
         <Text style={styles.addButtonText}>

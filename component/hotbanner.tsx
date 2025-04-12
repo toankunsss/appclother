@@ -31,7 +31,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 10,
     width: WIDTH - 30, // Chiều rộng bằng màn hình
-    // Không đặt height để tự động điều chỉnh
+    marginVertical: 10,
   },
   image: {
     width: WIDTH - 30, // Chiều rộng bằng màn hình

@@ -1,18 +1,46 @@
-import { StyleSheet, Text, View, TouchableOpacity, Image } from "react-native";
-import React, { useState } from "react"; // Thêm useState
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  Image,
+  Modal,
+} from "react-native";
+import React, { useState } from "react";
 import FontAwesome6 from "react-native-vector-icons/FontAwesome6";
-import { Link, useRouter } from "expo-router";
+import { Link, useRouter, useLocalSearchParams } from "expo-router";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { papal, visa, maestro, appleImag } from "@/contants/image/img";
-
+import { useCart } from "@/context/contexCart";
+import { check } from "@/contants/image/img";
 const checkPayment = () => {
   const router = useRouter();
-  const [selectedPayment, setSelectedPayment] = useState(null); // State để theo dõi payment được chọn
-
+  const { total, selectedItems } = useLocalSearchParams();
+  const { removeFromCart } = useCart();
+  const parsedSelectedItems = selectedItems ? JSON.parse(selectedItems) : [];
+  const [selectedPayment, setSelectedPayment] = useState(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const handlePress = (paymentType: any) => {
-    setSelectedPayment(paymentType); // Cập nhật payment được chọn khi nhấn
+    setSelectedPayment(paymentType);
   };
 
+  const handlePayment = () => {
+    if (!selectedPayment) {
+      alert("Please select a payment method");
+      return;
+    }
+    // Giả lập thanh toán thành công
+    setShowSuccessModal(true);
+  };
+
+  const handleContinueAfterSuccess = async () => {
+    // Xóa các sản phẩm đã thanh toán khỏi giỏ hàng
+    for (const cartId of parsedSelectedItems) {
+      await removeFromCart(cartId);
+    }
+    setShowSuccessModal(false);
+    router.navigate("/(drawer)/(tabs)/shop");
+  };
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -26,11 +54,11 @@ const checkPayment = () => {
         </Link>
       </View>
 
-      {/* cart */}
+      {/* Cart Details */}
       <View style={styles.cartDetail}>
         <View style={[styles.row]}>
           <Text style={styles.text}>Order</Text>
-          <Text style={styles.text}>7,000</Text>
+          <Text style={styles.text}>{parseFloat(total) - 30}</Text>
         </View>
         <View style={[styles.row]}>
           <Text style={styles.text}>Shipping</Text>
@@ -38,23 +66,23 @@ const checkPayment = () => {
         </View>
         <View style={[styles.row]}>
           <Text style={[styles.text, { color: "black" }]}>Total</Text>
-          <Text style={[styles.text, { color: "black" }]}>7,030</Text>
+          <Text style={[styles.text, { color: "black" }]}>{total}</Text>
         </View>
       </View>
 
-      {/* payment */}
+      {/* Payment Methods */}
       <Text style={{ fontSize: 18 }}>Payment</Text>
       <View style={{ marginTop: 20 }}>
         <TouchableOpacity
           style={[
             styles.row,
             styles.cart,
-            selectedPayment === "visa" && styles.selectedCart, // Thêm viền khi được chọn
+            selectedPayment === "visa" && styles.selectedCart,
           ]}
           onPress={() => handlePress("visa")}
         >
           <Image source={visa} />
-          <Text style={{ color: "#c4c4c4" }}>000211221212</Text>
+          <Text style={{ color: "#c4c4c4" }}>**** **** **** 2709</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -66,7 +94,7 @@ const checkPayment = () => {
           onPress={() => handlePress("maestro")}
         >
           <Image source={maestro} />
-          <Text style={{ color: "#c4c4c4" }}>000211221212</Text>
+          <Text style={{ color: "#c4c4c4" }}>**** **** **** 2709</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -78,11 +106,11 @@ const checkPayment = () => {
           onPress={() => handlePress("paypal")}
         >
           <Image source={papal} />
-          <Text style={{ color: "#c4c4c4" }}>000211221212</Text>
+          <Text style={{ color: "#c4c4c4" }}>**** **** **** 2709</Text>
         </TouchableOpacity>
       </View>
 
-      {/* button */}
+      {/* Continue Button */}
       <TouchableOpacity
         style={{
           backgroundColor: "#F83758",
@@ -91,9 +119,37 @@ const checkPayment = () => {
           padding: 15,
           borderRadius: 8,
         }}
+        onPress={handlePayment}
       >
         <Text style={{ color: "#fff", fontSize: 22 }}>Continue</Text>
       </TouchableOpacity>
+
+      {/* Success Modal */}
+      <Modal
+        visible={showSuccessModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowSuccessModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.checkIconContainer}>
+              <Image
+                source={check}
+                style={{ width: 50, height: 50 }}
+                resizeMode="contain"
+              />
+            </View>
+            <Text style={styles.successText}>Payment done successfully.</Text>
+            <TouchableOpacity
+              style={styles.continueButton}
+              onPress={handleContinueAfterSuccess}
+            >
+              <Text style={styles.continueButtonText}>Continue</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -131,6 +187,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
   },
   text: {
     fontSize: 18,
@@ -143,8 +200,56 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   selectedCart: {
-    // Style mới cho viền khi được chọn
     borderWidth: 2,
-    borderColor: "#F83758", // Màu viền (có thể thay đổi)
+    borderColor: "#F83758",
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    padding: 20,
+    alignItems: "center",
+    width: "80%",
+  },
+  checkIconContainer: {
+    backgroundColor: "#F83758",
+    borderRadius: 50,
+    padding: 10,
+    marginBottom: 20,
+  },
+  successText: {
+    fontSize: 18,
+    fontWeight: "500",
+    marginBottom: 20,
+  },
+  paymentInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  paymentIcon: {
+    width: 30,
+    height: 20,
+    marginRight: 10,
+  },
+  cardNumber: {
+    fontSize: 16,
+    color: "#666",
+  },
+  continueButton: {
+    backgroundColor: "#F83758",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  continueButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "500",
   },
 });

@@ -18,6 +18,7 @@ export default function TabLayout() {
         },
         tabBarActiveTintColor: "#EB3030",
         tabBarInactiveTintColor: "#000000",
+        tabBarHideOnKeyboard: true,
         tabBarIcon: ({ focused, size = 24 }) => {
           let iconName = "home";
           switch (route.name) {

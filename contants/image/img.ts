@@ -9,3 +9,4 @@ export const special = require("../../assets/images/Rectangle56.png");
 export const papal = require("../../assets/images/paypal.png");
 export const visa = require("../../assets/images/visa.png");
 export const maestro = require("../../assets/images/maestro.png");
+export const check = require("../../assets/images/check.png");

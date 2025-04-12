@@ -5,7 +5,6 @@ import Feather from "react-native-vector-icons/Feather";
 import { View, Image, Text, StyleSheet, TouchableOpacity } from "react-native";
 import Header from "@/component/header";
 import { ggImag } from "@/contants/image/img";
-
 export default function DrawerLayout() {
   const pathname = usePathname();
   // Các trang cần ẩn Drawer
@@ -49,6 +48,13 @@ export default function DrawerLayout() {
         headerShown: !hiddenDrawerTabs.includes(pathname), // Ẩn header nếu trong danh sách
         swipeEnabled: !hiddenDrawerTabs.includes(pathname), // Chặn vuốt mở Drawer
         header: () => <Header />,
+        drawerType: "slide",
+        overlayColor: "rgba(0,0,0,0.7)",
+        drawerStyle: {
+          width: "75%",
+        },
+        swipeEdgeWidth: 100,
+        swipeMinDistance: 20,
       }}
     />
   );

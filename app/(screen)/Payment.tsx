@@ -5,15 +5,36 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
+  FlatList,
 } from "react-native";
 import React from "react";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import FontAwesome6 from "react-native-vector-icons/FontAwesome6";
 import { Link, useRouter } from "expo-router";
 import Address from "@/component/address";
+import { useLocalSearchParams } from "expo-router";
+import { useCart } from "@/context/contexCart";
+
 const Payment = () => {
   const router = useRouter();
+  const { cartItems } = useCart();
+  const { selectedItems, total } = useLocalSearchParams();
+  const parsedSelectedItems =
+    typeof selectedItems === "string" ? JSON.parse(selectedItems) : [];
 
+  // Lọc các sản phẩm được chọn
+  const selectedCartItems = cartItems.filter((item) =>
+    parsedSelectedItems.includes(item.cart_id)
+  );
+  const handleProceedToPayment = () => {
+    router.push({
+      pathname: "/(screen)/checkPayment",
+      params: {
+        selectedItems: JSON.stringify(parsedSelectedItems),
+        total: (parseFloat(total) + 30).toFixed(2), // Tổng giá trị bao gồm phí vận chuyển (30)
+      },
+    });
+  };
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -32,17 +53,20 @@ const Payment = () => {
         {/* Address */}
         <Address />
 
-        {/* Product */}
-        <View style={styles.productContainer}>
-          <Image
-            source={{ uri: "https://via.placeholder.com/100" }} // Thay bằng URL hình ảnh thực tế
-            style={styles.productImage}
-          />
-          <View style={styles.productDetails}>
-            <Text style={styles.productName}>Women's Casual Wear</Text>
-            <Text style={styles.productPrice}>$34.00</Text>
+        {/* Danh sách sản phẩm */}
+        {selectedCartItems.map((item) => (
+          <View key={item.cart_id} style={styles.productContainer}>
+            <Image
+              source={{ uri: item.image || "https://via.placeholder.com/100" }}
+              style={styles.productImage}
+            />
+            <View style={styles.productDetails}>
+              <Text style={styles.productName}>{item.name}</Text>
+              <Text style={styles.productPrice}>${item.price.toFixed(2)}</Text>
+              <Text style={styles.quantityText}>Quantity: {item.quantity}</Text>
+            </View>
           </View>
-        </View>
+        ))}
 
         {/* Apply Coupons */}
         <View style={styles.couponContainer}>
@@ -57,13 +81,10 @@ const Payment = () => {
           <Text style={styles.sectionTitle}>Order Payment Details</Text>
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Order Amounts</Text>
-            <Text style={styles.detailValue}>₹ 7,000.00</Text>
+            <Text style={styles.detailValue}>${total}</Text>
           </View>
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Convenience</Text>
-            <TouchableOpacity>
-              <Text style={styles.knowMoreText}>Know More</Text>
-            </TouchableOpacity>
             <Text style={[styles.detailValue, { color: "#F83758" }]}>
               Apply Coupon
             </Text>
@@ -78,7 +99,7 @@ const Payment = () => {
         <View style={styles.totalContainer}>
           <View style={styles.detailRow}>
             <Text style={styles.sectionTitle}>Order Total</Text>
-            <Text style={styles.detailValue}>₹ 7,000.00</Text>
+            <Text style={styles.detailValue}>${total}</Text>
           </View>
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>EMI AVAILABLE</Text>
@@ -92,12 +113,12 @@ const Payment = () => {
       {/* Footer cố định */}
       <View style={styles.footer}>
         <View style={styles.footerPrice}>
-          <Text style={styles.footerPriceText}>₹ 7,000.00</Text>
-          <TouchableOpacity>
-            <Text style={styles.viewDetailsText}>View Details</Text>
-          </TouchableOpacity>
+          <Text style={styles.footerPriceText}>${total}</Text>
         </View>
-        <TouchableOpacity style={styles.proceedButton}>
+        <TouchableOpacity
+          style={styles.proceedButton}
+          onPress={handleProceedToPayment}
+        >
           <Text style={styles.proceedText}>Proceed to Payment</Text>
         </TouchableOpacity>
       </View>

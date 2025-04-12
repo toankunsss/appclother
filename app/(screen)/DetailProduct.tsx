@@ -7,28 +7,32 @@ import {
   Dimensions,
   Image,
 } from "react-native";
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Link, useRouter, useLocalSearchParams } from "expo-router";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import FontAwesome6 from "react-native-vector-icons/FontAwesome6";
 import AddCart from "@/component/addCart";
-
+import { getProductById } from "@/api/api";
+import {
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from "react-native-reanimated";
+import Animated from "react-native-reanimated";
+import { useAnimatedStyle } from "react-native-reanimated";
 const WIDTH = Dimensions.get("window").width;
 const HEIGHT = Dimensions.get("window").height;
 
-// Component CustomRating tự xây dựng
 const CustomRating = ({ rating, maxStars = 5, starSize = 15 }) => {
   return (
     <View style={{ flexDirection: "row" }}>
       {[...Array(maxStars)].map((_, index) => {
-        // Xác định loại sao: đầy, nửa, hoặc rỗng
         const starType =
           index + 1 <= Math.floor(rating)
-            ? "star" // Sao đầy
+            ? "star"
             : index + 1 <= Math.ceil(rating) && rating % 1 >= 0.5
-            ? "star-half" // Sao nửa
-            : "star-outline"; // Sao rỗng
-
+            ? "star-half"
+            : "star-outline";
         return (
           <Ionicons
             key={index}
@@ -46,41 +50,111 @@ const Viewshop = () => {
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [product, setProduct] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
   const [imgActive, setImgActive] = useState(0);
   const params = useLocalSearchParams();
 
-  // Sử dụng useMemo để ổn định giá trị params.product
-  const productParam = useMemo(() => params.product, [params.product]);
+  const [countCart, setCount] = useState(0);
+  const cartIconRef = useRef(null);
+  const animatedY = useSharedValue(0);
+  const animatedX = useSharedValue(0);
+  const scale = useSharedValue(1);
+  const opacity = useSharedValue(1);
+  const [showAnimBadge, setShowAnimBadge] = useState(false);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: animatedX.value },
+      { translateY: animatedY.value },
+      { scale: scale.value },
+    ],
+    opacity: opacity.value,
+  }));
+
+  const startAnimation = (
+    startX: number,
+    startY: number,
+    endX: number,
+    endY: number
+  ) => {
+    animatedX.value = startX;
+    animatedY.value = startY;
+    scale.value = 1;
+    opacity.value = 1;
+
+    animatedX.value = withSpring(endX);
+    animatedY.value = withSpring(endY);
+    scale.value = withSpring(0.5);
+    opacity.value = withTiming(0, { duration: 500 });
+  };
+
+  const handleAddToCartSuccess = () => {
+    setShowAnimBadge(true);
+    cartIconRef.current?.measure(
+      (
+        fx: number,
+        fy: number,
+        width: number,
+        height: number,
+        px: number,
+        py: number
+      ) => {
+        // Start animation from center of screen
+        const startX = WIDTH / 2;
+        const startY = HEIGHT / 2;
+
+        animatedX.value = startX;
+        animatedY.value = startY;
+        scale.value = 1;
+        opacity.value = 1;
+
+        animatedX.value = withSpring(px - 5, { damping: 12 });
+        animatedY.value = withSpring(py - 5, { damping: 12 });
+        scale.value = withTiming(0.5, { duration: 300 });
+        opacity.value = withTiming(0, {
+          duration: 300,
+          onCallback: () => {
+            setShowAnimBadge(false);
+          },
+        });
+      }
+    );
+    setCount((prev) => prev + 1);
+  };
 
   useEffect(() => {
-    if (productParam) {
-      const productData = JSON.parse(productParam as string);
+    const fetchProduct = async () => {
+      const productId = params.productId as string;
+      console.log("Product ID:", productId);
+      if (productId) {
+        try {
+          const productData = await getProductById(productId);
+          console.log("Product data1:", productData);
+          setProduct(productData);
 
-      // Chỉ cập nhật state nếu dữ liệu thực sự thay đổi
-      if (JSON.stringify(productData) !== JSON.stringify(product)) {
-        setProduct(productData);
-
-        // Chọn mặc định size và color đầu tiên nếu có
-        if (
-          productData.sizes &&
-          productData.sizes.length > 0 &&
-          productData.sizes[0] !== "N/A" &&
-          selectedSize !== productData.sizes[0]
-        ) {
-          setSelectedSize(productData.sizes[0]);
-        }
-        if (
-          productData.colors &&
-          productData.colors.length > 0 &&
-          selectedColor !== productData.colors[0].code
-        ) {
-          setSelectedColor(productData.colors[0].code);
+          // Chọn mặc định size và color đầu tiên nếu có
+          if (
+            productData.sizes &&
+            productData.sizes.length > 0 &&
+            productData.sizes[0] !== "N/A"
+          ) {
+            setSelectedSize(productData.sizes[0]);
+          }
+          if (productData.colors && productData.colors.length > 0) {
+            setSelectedColor(productData.colors[0].code);
+          }
+        } catch (error) {
+          console.error("Error fetching product:", error);
+          setProduct(null);
+        } finally {
+          setLoading(false);
         }
       }
-    }
-  }, [productParam]); // Dependency chỉ là productParam, không phải toàn bộ params
+    };
+    fetchProduct();
+  }, [params.productId]);
 
   const onchange = (nativeEvent: any) => {
     if (nativeEvent) {
@@ -115,7 +189,7 @@ const Viewshop = () => {
     }
   };
 
-  if (!product) {
+  if (loading) {
     return (
       <View style={styles.container}>
         <Text>Loading product...</Text>
@@ -123,19 +197,34 @@ const Viewshop = () => {
     );
   }
 
+  if (!product) {
+    return (
+      <View style={styles.container}>
+        <Text>Product not found</Text>
+      </View>
+    );
+  }
+
   const images = product.images || [];
 
   return (
-    <>
+    <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <ScrollView style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()}>
             <Ionicons name="chevron-back" size={28} />
           </TouchableOpacity>
-          <Link href="/(drawer)/(tabs)/shop" style={styles.cartIcon}>
-            <FontAwesome6 name="cart-shopping" size={14} />
-          </Link>
+          <TouchableOpacity onPress={() => router.navigate("/shop")}>
+            <View ref={cartIconRef} style={styles.cartIcon}>
+              <FontAwesome6 name="cart-shopping" size={20} />
+              {countCart > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{countCart}</Text>
+                </View>
+              )}
+            </View>
+          </TouchableOpacity>
         </View>
 
         {/* Image Slider */}
@@ -280,18 +369,27 @@ const Viewshop = () => {
           <Text style={styles.deliveryTime}>1-2 Business Days</Text>
         </View>
       </ScrollView>
+
+      {showAnimBadge && (
+        <Animated.View style={[styles.animatedBadge, animatedStyle]}>
+          <Text style={styles.animatedBadgeText}>+1</Text>
+        </Animated.View>
+      )}
+      {/* Add to Cart Button */}
       <AddCart
         stock={product.stock}
         product={product}
         selectedColor={selectedColor}
         selectedSize={selectedSize}
+        onAddSuccess={handleAddToCartSuccess}
       />
-    </>
+    </View>
   );
 };
 
 export default Viewshop;
 
+// Styles giữ nguyên như cũ
 const styles = StyleSheet.create({
   container: {
     backgroundColor: "#F9F9F9",
@@ -308,6 +406,21 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: "#F2F2F2",
     padding: 10,
+  },
+  badge: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    position: "absolute",
+    backgroundColor: "#000",
+    top: -5,
+    right: -5,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  badgeText: {
+    color: "#fff",
+    fontSize: 12,
   },
   imageContainer: {
     position: "relative",
@@ -344,7 +457,7 @@ const styles = StyleSheet.create({
   },
   activeDot: {
     fontSize: 40,
-    lineHeight: 40,
+    lineHeight: 45,
     color: "#F83758",
   },
   prevButton: {
@@ -495,6 +608,21 @@ const styles = StyleSheet.create({
   },
   deliveryTime: {
     fontSize: 18,
+    fontWeight: "bold",
+  },
+  animatedBadge: {
+    position: "absolute",
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: "#000",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 999,
+  },
+  animatedBadgeText: {
+    color: "#fff",
+    fontSize: 14,
     fontWeight: "bold",
   },
 });

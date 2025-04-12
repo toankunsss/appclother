@@ -11,7 +11,7 @@ import { getProducts } from "@/api/api";
 import { useRouter } from "expo-router";
 
 type ProductType = {
-  product_id: number;
+  product_id: string;
   category_id: number;
   name: string;
   description: string;
@@ -23,6 +23,7 @@ type ProductType = {
   colors: { name: string; code: string }[];
   sizes: string[];
   created_at: string;
+  id: string;
 };
 
 const Wishlist = () => {
@@ -35,6 +36,7 @@ const Wishlist = () => {
       try {
         setLoading(true);
         const data = await getProducts();
+        console.log("Data:", data); // Kiểm tra dữ liệu nhận được
         if (Array.isArray(data)) {
           setProducts(data);
         } else {
@@ -50,10 +52,10 @@ const Wishlist = () => {
     fetchData();
   }, []);
 
-  const handleProductPress = (product: ProductType) => {
+  const handleProductPress = (productId: string) => {
     router.push({
       pathname: "/(screen)/DetailProduct",
-      params: { product: JSON.stringify(product) },
+      params: { productId: productId.toString() }, // Chỉ truyền product_id
     });
   };
 
@@ -81,13 +83,15 @@ const Wishlist = () => {
         renderItem={({ item }) => (
           <TouchableOpacity
             style={{ width: "47%" }}
-            onPress={() => handleProductPress(item)}
+            onPress={() => {
+              handleProductPress(item.id);
+            }} // Truyền product_id
           >
             <Product product={item} />
           </TouchableOpacity>
         )}
         numColumns={2}
-        columnWrapperStyle={styles.columnWrapper} // Căn chỉnh khoảng cách
+        columnWrapperStyle={styles.columnWrapper}
       />
     </View>
   );
@@ -98,14 +102,11 @@ export default Wishlist;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 10, // Giảm padding để vừa với 2 cột
+    paddingHorizontal: 20,
     backgroundColor: "#F9F9F9",
   },
   columnWrapper: {
-    justifyContent: "space-between", // Đảm bảo khoảng cách đều giữa 2 cột
+    justifyContent: "space-between",
     marginBottom: 10,
-  },
-  listContainer: {
-    paddingBottom: 20, // Thêm padding dưới cùng để không bị che
   },
 });

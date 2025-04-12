@@ -6,17 +6,23 @@ import {
   TouchableOpacity,
   Dimensions,
 } from "react-native";
-import React from "react";
+import React, { useState } from "react";
 const WIDTH = Dimensions.get("screen").width;
-const Procceed = ({ ship, total, subtotal }: any) => {
+const Procceed = ({ ship, total, procceed }: any) => {
+  const [promoCode, setPromoCode] = useState("");
+  const [discount, setDiscount] = useState(0);
+  const applyPromoCode = () => {
+    // Giả lập logic kiểm tra mã promo
+    if (promoCode === "DISCOUNT10") {
+      setDiscount(total * 0.1); // Giảm 10%
+    } else {
+      alert("Invalid promo code");
+    }
+  };
+
   return (
     <View
-      style={{
-        width: WIDTH,
-        padding: 15,
-        backgroundColor: "#fff",
-        gap: 5,
-      }}
+      style={{ width: WIDTH, padding: 15, backgroundColor: "#fff", gap: 5 }}
     >
       <View style={[styles.row, { gap: 10 }]}>
         <TextInput
@@ -27,7 +33,9 @@ const Procceed = ({ ship, total, subtotal }: any) => {
             padding: 10,
           }}
           placeholder="PROMO CODE"
-        ></TextInput>
+          value={promoCode}
+          onChangeText={setPromoCode}
+        />
         <TouchableOpacity
           style={{
             flex: 1,
@@ -36,24 +44,30 @@ const Procceed = ({ ship, total, subtotal }: any) => {
             justifyContent: "center",
             borderRadius: 10,
           }}
+          onPress={applyPromoCode}
         >
-          <Text style={{ color: "#fff" }}>Chonse</Text>
+          <Text style={{ color: "#fff" }}>Apply</Text>
         </TouchableOpacity>
       </View>
-      <View style={[styles.row]}>
+      <View style={styles.row}>
         <Text>Subtotal</Text>
-        <Text>${subtotal}</Text>
+        <Text>${total}</Text>
       </View>
-      <View style={[styles.row]}>
+      <View style={styles.row}>
+        <Text>Discount</Text>
+        <Text>-${discount.toFixed(2)}</Text>
+      </View>
+      <View style={styles.row}>
         <Text>Shipping</Text>
         <Text>${ship}</Text>
       </View>
-      <View style={{ borderWidth: 1 }}> </View>
-      <View style={[styles.row]}>
+      <View style={{ borderWidth: 1 }} />
+      <View style={styles.row}>
         <Text>Total</Text>
-        <Text>${total}</Text>
+        <Text>${(parseFloat(total) - discount).toFixed(2)}</Text>
       </View>
       <TouchableOpacity
+        onPress={procceed}
         style={{
           alignItems: "center",
           backgroundColor: "#F83758",

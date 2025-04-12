@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import FormField from "@/component/formfield";
 import { useRouter } from "expo-router";
@@ -14,8 +14,9 @@ import CustomButton from "@/component/customButton";
 import Footer from "@/component/footer";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../firebase/firebaseConfig";
-import { useEffect } from "react";
 import { useAuth } from "@/context/contextAuth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 const SignIn = () => {
   const [form, setForm] = useState({
     email: "",
@@ -25,6 +26,7 @@ const SignIn = () => {
   const [isDisabled, setIsDisabled] = useState(false);
   const router = useRouter();
   const { setUser } = useAuth();
+
   useEffect(() => {
     if (form.email && form.password) {
       setIsDisabled(false);
@@ -32,6 +34,7 @@ const SignIn = () => {
       setIsDisabled(true);
     }
   }, [form.email, form.password]);
+
   const handleSignIn = async () => {
     if (!form.email || !form.password) {
       Alert.alert("Lỗi", "Vui lòng nhập email và mật khẩu!");
@@ -46,15 +49,16 @@ const SignIn = () => {
         form.password
       );
       const user = userCredential.user;
-      console.log("User:", userCredential.user);
+      await AsyncStorage.setItem("user", JSON.stringify(user)); // Lưu user vào AsyncStorage
       setUser(user);
       Alert.alert("Thành công", "Đăng nhập thành công!");
-      router.push("/home"); // Điều hướng sau khi đăng nhập
+      router.push("/home");
     } catch (error: any) {
       console.log("Error:", error.message);
       Alert.alert("Lỗi", "Email hoặc mật khẩu không đúng!");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -62,7 +66,6 @@ const SignIn = () => {
       <ScrollView>
         <View style={styles.container}>
           <Text style={styles.title}>Welcome{"\n"}Back!</Text>
-
           <FormField
             title="Email"
             value={form.email}
@@ -73,7 +76,6 @@ const SignIn = () => {
             otherStyles={styles.input}
             keyboardType="email-address"
           />
-
           <FormField
             title="Password"
             value={form.password}
@@ -84,14 +86,12 @@ const SignIn = () => {
             otherStyles={styles.input}
             secureTextEntry={true}
           />
-
           <TouchableOpacity
             style={styles.touchForgot}
             onPress={() => router.push("./forgot")}
           >
             <Text style={styles.forgot}>Forgot Password?</Text>
           </TouchableOpacity>
-
           <CustomButton
             title={loading ? "Logging in..." : "Login"}
             handleChangeText={handleSignIn}
@@ -99,9 +99,8 @@ const SignIn = () => {
             TextStyles={styles.buttonText}
             isLoading={isDisabled}
           />
-
           <Footer
-            title={<Text>Create An Account</Text>}
+            title="Don't have an account?"
             hrefLink={
               <Text
                 style={styles.signUpLink}
@@ -118,6 +117,8 @@ const SignIn = () => {
 };
 
 export default SignIn;
+
+// Styles giữ nguyên
 
 const styles = StyleSheet.create({
   fullContainer: {

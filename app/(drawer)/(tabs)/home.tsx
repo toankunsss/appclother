@@ -8,9 +8,8 @@ import {
   ImageBackground,
   Dimensions,
 } from "react-native";
-import React from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { ScrollView } from "react-native-gesture-handler";
-import { useEffect, useState } from "react";
 import { getCategories } from "@/api/api";
 import PostSale from "@/component/postSale";
 import TimerBox from "@/component/TimerBox";
@@ -57,6 +56,7 @@ type ProductType = {
   colors: { name: string; code: string }[];
   sizes: string[];
   created_at: string;
+  id: string;
 };
 const home = () => {
   const WIDTH = Dimensions.get("window").width;
@@ -71,11 +71,12 @@ const home = () => {
   });
   const router = useRouter();
   const [products, setProduct] = useState<ProductType[]>([]);
+  const flatListRef = useRef<FlatList>(null);
 
-  const handleProductPress = (product: ProductType) => {
+  const handleProductPress = (productId: string) => {
     router.push({
       pathname: "/(screen)/DetailProduct",
-      params: { product: JSON.stringify(product) },
+      params: { productId: productId.toString() }, // Chỉ truyền product_id
     });
   };
   useEffect(() => {
@@ -110,10 +111,23 @@ const home = () => {
     fetchCategories();
   }, []);
 
+  useEffect(() => {
+    const autoScroll = setInterval(() => {
+      if (flatListRef.current) {
+        const nextIndex = (activeIndex + 1) % postImages.length;
+        flatListRef.current.scrollToIndex({
+          index: nextIndex,
+          animated: true,
+        });
+      }
+    }, 1000); // Scroll mỗi 1 giây
+
+    return () => clearInterval(autoScroll);
+  }, [activeIndex]);
+
   const handldeScroll = (event: any) => {
-    const contentOffsetX = event.nativeEvent.contentOffset.x; // Vị trí cuộn theo chiều ngang
-    const index = Math.round(contentOffsetX / (WIDTH - 30)); // Tính chỉ số phần tử hiện tại
-    console.log("Current index:", index); // In chỉ số phần tử hiện tại
+    const contentOffsetX = event.nativeEvent.contentOffset.x;
+    const index = Math.round(contentOffsetX / WIDTH); // Changed from WIDTH - 30 to WIDTH
     setActiveIndex(index);
   };
   return (
@@ -135,23 +149,26 @@ const home = () => {
         )}
       </ScrollView>
       <FlatList
+        ref={flatListRef}
         data={postImages}
         horizontal
         showsHorizontalScrollIndicator={false}
         pagingEnabled
+        snapToAlignment="start"
+        decelerationRate="fast"
+        snapToInterval={WIDTH}
         renderItem={({ item }) => (
-          <PostSale
-            img={item.img}
-            sale_off={item.sale_off}
-            describe={item.describe}
-          />
+          <View style={{ width: WIDTH }}>
+            <PostSale
+              img={item.img}
+              sale_off={item.sale_off}
+              describe={item.describe}
+            />
+          </View>
         )}
         keyExtractor={(item) => item.sale_off}
-        contentContainerStyle={{ paddingHorizontal: 0, marginBottom: 10 }}
-        onScroll={handldeScroll} // Gọi hàm khi cuộn
-        snapToAlignment="center" // Căn giữa phần tử
-        decelerationRate="fast"
-        snapToInterval={WIDTH - 30} // Chiều rộng của mỗi phần tử
+        onScroll={handldeScroll}
+        contentContainerStyle={{ marginBottom: 10 }}
       />
       <View style={{ flexDirection: "row", justifyContent: "center" }}>
         {postImages.map((_, index) => (
@@ -181,7 +198,7 @@ const home = () => {
         renderItem={({ item }) => (
           <TouchableOpacity
             style={{ width: WIDTH / 2 - 20, borderRadius: 20 }}
-            onPress={() => handleProductPress(item)}
+            onPress={() => handleProductPress(item.id)}
           >
             <Product product={item} />
           </TouchableOpacity>
