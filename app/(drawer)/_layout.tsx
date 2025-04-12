@@ -4,12 +4,44 @@ import { DrawerContentScrollView, DrawerItem } from "@react-navigation/drawer";
 import Feather from "react-native-vector-icons/Feather";
 import { View, Image, Text, StyleSheet, TouchableOpacity } from "react-native";
 import Header from "@/component/header";
-import { ggImag } from "@/contants/image/img";
+import { ggImag, logo } from "@/contants/image/img";
+import { useAuth } from "@/context/contextAuth";
+import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import { auth } from "@/firebase/firebaseConfig";
+import { getUserById } from "@/api/api"; // Import your API function to get user data
 export default function DrawerLayout() {
+  const router = useRouter();
+  const { logout } = useAuth();
   const pathname = usePathname();
   // Các trang cần ẩn Drawer
   const hiddenDrawerTabs = ["/search", "/setting", "/shop"];
-
+  const [userData, setUserData] = useState({
+    email: "",
+    pincode: "",
+    address: "",
+    city: "",
+    state: "",
+    country: "",
+    bankAccountNumber: "",
+    accountHolderName: "",
+    ifscCode: "",
+  });
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        try {
+          const data = await getUserById(user.uid);
+          console.log("Dữ liệu người dùng được lấy:", data);
+          setUserData(data);
+        } catch (error) {
+          console.error("Lỗi khi lấy dữ liệu người dùng:", error);
+        }
+      }
+    };
+    fetchUserData();
+  }, []);
   const CustomDrawerContent = (props: any) => {
     return (
       <>
@@ -17,8 +49,7 @@ export default function DrawerLayout() {
           <View style={styles.userInforWrapper}>
             <Image style={styles.imageInforWrapper} source={ggImag} />
             <View style={styles.containerTextInforWrapper}>
-              <Text style={styles.textNameInforWrapper}>Hina</Text>
-              <Text style={styles.textInforWrapper}>hina@gmail.com</Text>
+              <Text style={styles.textInforWrapper}>{userData.email}</Text>
             </View>
           </View>
           <DrawerItem
@@ -26,7 +57,9 @@ export default function DrawerLayout() {
               <Feather name="home" size={24} color={color} />
             )}
             label={"Home"}
-            onPress={() => {}}
+            onPress={() => {
+              router.replace("/(drawer)/(tabs)/home");
+            }}
           />
         </DrawerContentScrollView>
         <View style={styles.containerFuntion}>
@@ -35,7 +68,10 @@ export default function DrawerLayout() {
               <Feather name="log-out" size={24} color={color} />
             )}
             label={"Log Out"}
-            onPress={() => {}}
+            onPress={async () => {
+              await logout();
+              router.replace("/(auth)/sign-in"); // chuyển về trang login
+            }}
           />
         </View>
       </>

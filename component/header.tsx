@@ -7,17 +7,25 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { Link } from "expo-router";
-import { logo } from "@/contants/image/img";
+import { ggImag, logo } from "@/contants/image/img";
 import React, { useState } from "react";
 import Feather from "react-native-vector-icons/Feather";
 import { useNavigation } from "expo-router";
 import { DrawerActions } from "@react-navigation/native";
 import { TextInput } from "react-native-gesture-handler";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
+// import * as Speech from "expo-speech";
+
 
 const Header = () => {
   const navigation = useNavigation();
   const [text, setText] = useState("");
+  // const speak = () => {
+  //   if (text.trim() !== "") {
+  //     Speech.speak(text);
+  //   }
+  // };
+
   return (
     <>
       <View style={styles.contrainer}>
@@ -32,7 +40,7 @@ const Header = () => {
         <View style={styles.component}>
           <Link href="/(screen)/profile">
             <Image
-              source={logo}
+              source={ggImag}
               style={{ resizeMode: "contain", height: 40, width: 40 }}
             />
           </Link>
@@ -48,7 +56,9 @@ const Header = () => {
             value={text}
             onChangeText={setText}
           />
-          <Feather name="mic" size={15} color="#BBBBBB" />
+          <TouchableOpacity >
+            <Feather name="mic" size={15} color="#BBBBBB" />
+          </TouchableOpacity>
         </View>
         <View style={styles.containerFeather}>
           <Text style={{ fontWeight: "bold", fontSize: 18 }}>ALL Featured</Text>

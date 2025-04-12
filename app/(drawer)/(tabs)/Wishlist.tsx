@@ -1,14 +1,9 @@
-import {
-  StyleSheet,
-  Text,
-  View,
-  FlatList,
-  TouchableOpacity,
-} from "react-native";
+import { StyleSheet, Text, View, FlatList, TouchableOpacity } from "react-native";
 import React from "react";
 import Product from "@/component/product";
-import { getProducts } from "@/api/api";
 import { useRouter } from "expo-router";
+import { useAuth } from "@/context/contextAuth";
+import { useWishlist } from "@/context/WishlistContext"; // Import useWishlist
 
 type ProductType = {
   product_id: string;
@@ -27,47 +22,27 @@ type ProductType = {
 };
 
 const Wishlist = () => {
-  const [products, setProducts] = React.useState<ProductType[]>([]);
-  const [loading, setLoading] = React.useState(true);
   const router = useRouter();
-
-  React.useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const data = await getProducts();
-        console.log("Data:", data); // Kiểm tra dữ liệu nhận được
-        if (Array.isArray(data)) {
-          setProducts(data);
-        } else {
-          setProducts([]);
-        }
-      } catch (error) {
-        console.error("Lỗi khi lấy dữ liệu:", error);
-        setProducts([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+  const { user } = useAuth();
+  const userId = user?.uid;
+  const { wishlist, refreshWishlist } = useWishlist(); // Sử dụng WishlistContext
 
   const handleProductPress = (productId: string) => {
     router.push({
       pathname: "/(screen)/DetailProduct",
-      params: { productId: productId.toString() }, // Chỉ truyền product_id
+      params: { productId: productId.toString() },
     });
   };
 
-  if (loading) {
+  if (!userId) {
     return (
       <View style={styles.container}>
-        <Text>Đang tải...</Text>
+        <Text>Vui lòng đăng nhập để xem wishlist</Text>
       </View>
     );
   }
 
-  if (products.length === 0) {
+  if (wishlist.length === 0) {
     return (
       <View style={styles.container}>
         <Text>Chưa có sản phẩm trong wishlist</Text>
@@ -78,14 +53,14 @@ const Wishlist = () => {
   return (
     <View style={styles.container}>
       <FlatList
-        data={products}
-        keyExtractor={(item) => item.product_id.toString()}
+        data={wishlist}
+        keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <TouchableOpacity
             style={{ width: "47%" }}
             onPress={() => {
-              handleProductPress(item.id);
-            }} // Truyền product_id
+              handleProductPress(item.product_id);
+            }}
           >
             <Product product={item} />
           </TouchableOpacity>

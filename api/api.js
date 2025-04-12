@@ -117,10 +117,10 @@ export const getCartByUserId = async (user_id) => {
           cartItem.discount ||
           (product
             ? `${(
-                ((product.original_price - product.sale_price) /
-                  product.original_price) *
-                100
-              ).toFixed(0)}%`
+              ((product.original_price - product.sale_price) /
+                product.original_price) *
+              100
+            ).toFixed(0)}%`
             : "0%"),
       };
     });
@@ -175,5 +175,96 @@ export const updateCartItemAPI = async (serverId, cartData) => {
   } catch (error) {
     console.error("Lỗi khi cập nhật giỏ hàng:", error);
     throw error;
+  }
+};
+
+export const updateCustomerInfo = async (uid, updatedData) => {
+  try {
+    const currentUserData = await getUserById(uid);
+    const userDataToUpdate = {
+      ...currentUserData,
+      pincode: updatedData.pincode || currentUserData.pincode,
+      address: updatedData.address || currentUserData.address,
+      city: updatedData.city || currentUserData.city,
+      state: updatedData.state || currentUserData.state,
+      country: updatedData.country || currentUserData.country,
+      bankAccountNumber: updatedData.bankAccountNumber || currentUserData.bankAccountNumber,
+      accountHolderName: updatedData.accountHolderName || currentUserData.accountHolderName,
+      ifscCode: updatedData.ifscCode || currentUserData.ifscCode,
+      image: updatedData.image || currentUserData.image,
+    };
+    const response = await updateUser(uid, userDataToUpdate);
+    console.log("Cập nhật thông tin thành công:", response);
+    return response;
+  } catch (error) {
+    console.error("Lỗi khi cập nhật thông tin khách hàng:", error);
+    throw error;
+  }
+};
+
+// Add to wishlist API
+export const addToWishlistAPI = async (wishlistData) => {
+  try {
+    const response = await BASE_URL.post("/wishlist", {
+      user_id: wishlistData.user_id,
+      product_id: wishlistData.product_id,
+      added_at: wishlistData.added_at,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi thêm vào wishlist:", error);
+    throw error;
+  }
+};
+
+// Remove from wishlist API
+export const removeFromWishlistAPI = async (wishlistId) => {
+  try {
+    const response = await BASE_URL.delete(`/wishlist/${wishlistId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi xóa khỏi wishlist:", error);
+    throw error;
+  }
+};
+
+// Get wishlist by user ID
+export const getWishlistByUserId = async (user_id) => {
+  try {
+    const wishlistResponse = await BASE_URL.get(`/wishlist?user_id=${user_id}`);
+    let wishlistData = wishlistResponse.data;
+
+    // Filter items by user_id
+    wishlistData = wishlistData.filter(
+      (item) => item.user_id && item.user_id === user_id
+    );
+
+    // Fetch products to enrich wishlist data
+    const productsResponse = await BASE_URL.get("/products");
+    const products = productsResponse.data;
+
+    // Enrich wishlist data with product details
+    const enrichedWishlistData = wishlistData.map((wishlistItem) => {
+      const product = products.find(
+        (p) => p.product_id === wishlistItem.product_id
+      );
+      return {
+        ...wishlistItem,
+        name: product?.name || "Unknown Product",
+        images: product?.images || ["https://via.placeholder.com/120"],
+        description: product?.description || "",
+        original_price: product?.original_price || 0,
+        sale_price: product?.sale_price || 0,
+        rating: product?.rating || { average: 0, count: 0 },
+        colors: product?.colors || [],
+        sizes: product?.sizes || [],
+        created_at: product?.created_at || "",
+      };
+    });
+
+    return enrichedWishlistData;
+  } catch (error) {
+    console.error("Lỗi khi lấy wishlist:", error);
+    return [];
   }
 };

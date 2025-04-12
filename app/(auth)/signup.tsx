@@ -29,6 +29,7 @@ const Signup = () => {
     bankAccountNumber: "",
     accountHolderName: "",
     ifscCode: "",
+    image: "",
   });
   const [isDisabled, setIsDisabled] = useState(true);
   const [error, setError] = useState("");
@@ -79,6 +80,7 @@ const Signup = () => {
         bankAccountNumber: form.bankAccountNumber || "",
         accountHolderName: form.accountHolderName || "",
         ifscCode: form.ifscCode || "",
+        image: form.image || "",
         createdAt: new Date().toISOString(),
       };
 

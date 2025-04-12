@@ -27,7 +27,7 @@ const FormField = ({
 
   return (
     <View>
-      <Text>{title}</Text>
+      <Text style={{ paddingLeft: 20 }}>{title}</Text>
       <View style={[styles.container, otherStyles]}>
         {placeholder === "Email" && (
           <Icon name="user" size={20} style={styles.leftIcon} />

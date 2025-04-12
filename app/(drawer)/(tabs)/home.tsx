@@ -5,15 +5,13 @@ import {
   Image,
   TouchableOpacity,
   FlatList,
-  ImageBackground,
   Dimensions,
 } from "react-native";
 import React, { useEffect, useState, useRef } from "react";
 import { ScrollView } from "react-native-gesture-handler";
-import { getCategories } from "@/api/api";
+import { getCategories, getProducts } from "@/api/api";
 import PostSale from "@/component/postSale";
 import TimerBox from "@/component/TimerBox";
-import { getProducts } from "@/api/api";
 import Product from "@/component/product";
 import { useRouter } from "expo-router";
 import Banner from "@/component/banner";
@@ -21,11 +19,29 @@ import DateBox from "@/component/DateBox";
 import PostLack from "@/component/postLack";
 import Sponsored from "@/component/Sponserd";
 import Hotbanner from "@/component/hotbanner";
+
 type CategoryType = {
   category_id: number;
   name: string;
   img_URI: string;
 };
+
+type ProductType = {
+  product_id: number;
+  category_id: number;
+  name: string;
+  description: string;
+  original_price: number;
+  sale_price: number;
+  stock: number;
+  images: string[];
+  rating: { average: number; count: number };
+  colors: { name: string; code: string }[];
+  sizes: string[];
+  created_at: string;
+  id: string;
+};
+
 const postImages = [
   {
     sale_off: "van toan",
@@ -43,22 +59,8 @@ const postImages = [
     describe: "Mua ngay",
   },
 ];
-type ProductType = {
-  product_id: number;
-  category_id: number;
-  name: string;
-  description: string;
-  original_price: number;
-  sale_price: number;
-  stock: number;
-  images: string[];
-  rating: { average: number; count: number };
-  colors: { name: string; code: string }[];
-  sizes: string[];
-  created_at: string;
-  id: string;
-};
-const home = () => {
+
+const Home = () => {
   const WIDTH = Dimensions.get("window").width;
   const HEIGHT = Dimensions.get("window").height;
   const [categories, setCategories] = useState<CategoryType[]>([]);
@@ -69,16 +71,56 @@ const home = () => {
     minute: 59,
     second: 59,
   });
+  const [products, setProducts] = useState<ProductType[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<ProductType[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<number | null>(null); // Danh mục được chọn
   const router = useRouter();
-  const [products, setProduct] = useState<ProductType[]>([]);
   const flatListRef = useRef<FlatList>(null);
 
+  // Lấy dữ liệu ban đầu
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const categoriesData = await getCategories();
+        const productsData = await getProducts();
+        setCategories(categoriesData);
+        setProducts(productsData);
+        setFilteredProducts(productsData);
+        setLoading(false);
+      } catch (error) {
+        console.error("Lỗi khi lấy dữ liệu:", error);
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  // Lọc sản phẩm khi danh mục được chọn
+  useEffect(() => {
+    if (selectedCategory === null) {
+      setFilteredProducts(products); // Hiển thị tất cả sản phẩm nếu không có danh mục được chọn
+    } else {
+      const filtered = products.filter(
+        (product) => product.category_id === selectedCategory
+      );
+      setFilteredProducts(filtered);
+    }
+  }, [selectedCategory, products]);
+
+  // Xử lý khi nhấn vào danh mục
+  const handleCategoryPress = (categoryId: number) => {
+    setSelectedCategory(categoryId === selectedCategory ? null : categoryId);
+  };
+
+  // Xử lý khi nhấn vào sản phẩm
   const handleProductPress = (productId: string) => {
     router.push({
       pathname: "/(screen)/DetailProduct",
-      params: { productId: productId.toString() }, // Chỉ truyền product_id
+      params: { productId: productId.toString() },
     });
   };
+
+  // Timer cho TimerBox
   useEffect(() => {
     const interval = setInterval(() => {
       setTimerBox((prevState) => {
@@ -100,17 +142,8 @@ const home = () => {
     }, 1000);
     return () => clearInterval(interval);
   }, []);
-  useEffect(() => {
-    const fetchCategories = async () => {
-      const categoriesData = await getCategories();
-      const items = await getProducts();
-      setProduct(items);
-      setCategories(categoriesData);
-      setLoading(false);
-    };
-    fetchCategories();
-  }, []);
 
+  // Auto-scroll cho banner
   useEffect(() => {
     const autoScroll = setInterval(() => {
       if (flatListRef.current) {
@@ -120,101 +153,148 @@ const home = () => {
           animated: true,
         });
       }
-    }, 1000); // Scroll mỗi 1 giây
+    }, 1000);
 
     return () => clearInterval(autoScroll);
   }, [activeIndex]);
 
-  const handldeScroll = (event: any) => {
+  const handleScroll = (event: any) => {
     const contentOffsetX = event.nativeEvent.contentOffset.x;
-    const index = Math.round(contentOffsetX / WIDTH); // Changed from WIDTH - 30 to WIDTH
+    const index = Math.round(contentOffsetX / WIDTH);
     setActiveIndex(index);
   };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Text>Đang tải...</Text>
+      </View>
+    );
+  }
+
   return (
     <ScrollView style={styles.container}>
+      {/* Danh mục */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         style={styles.featuredStyle}
       >
-        {loading ? (
-          <Text>Loading...</Text>
-        ) : (
-          categories.map((item) => (
-            <View key={item.category_id} style={styles.categoriesItem}>
-              <Image source={{ uri: item.img_URI }} style={styles.imageStyle} />
-              <Text style={styles.textCategory}>{item.name}</Text>
-            </View>
-          ))
-        )}
-      </ScrollView>
-      <FlatList
-        ref={flatListRef}
-        data={postImages}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        pagingEnabled
-        snapToAlignment="start"
-        decelerationRate="fast"
-        snapToInterval={WIDTH}
-        renderItem={({ item }) => (
-          <View style={{ width: WIDTH }}>
-            <PostSale
-              img={item.img}
-              sale_off={item.sale_off}
-              describe={item.describe}
-            />
-          </View>
-        )}
-        keyExtractor={(item) => item.sale_off}
-        onScroll={handldeScroll}
-        contentContainerStyle={{ marginBottom: 10 }}
-      />
-      <View style={{ flexDirection: "row", justifyContent: "center" }}>
-        {postImages.map((_, index) => (
-          <View
-            key={index}
-            style={{
-              width: 10,
-              height: 10,
-              borderRadius: 5,
-              backgroundColor: activeIndex === index ? "#FFA3B3" : "#DEDBDB",
-              marginHorizontal: 5,
-            }}
-          />
-        ))}
-      </View>
-      <TimerBox
-        house={timerBox.house}
-        minute={timerBox.minute}
-        second={timerBox.second}
-      />
-      <FlatList
-        data={products}
-        showsHorizontalScrollIndicator
-        horizontal
-        pagingEnabled
-        keyExtractor={(item) => item.product_id.toString()}
-        renderItem={({ item }) => (
+        {categories.map((item) => (
           <TouchableOpacity
-            style={{ width: WIDTH / 2 - 20, borderRadius: 20 }}
-            onPress={() => handleProductPress(item.id)}
+            key={item.category_id}
+            style={[
+              styles.categoriesItem,
+              selectedCategory === item.category_id && styles.selectedCategory,
+            ]}
+            onPress={() => handleCategoryPress(item.category_id)}
           >
-            <Product product={item} />
+            <Image source={{ uri: item.img_URI }} style={styles.imageStyle} />
+            <Text style={styles.textCategory}>{item.name}</Text>
           </TouchableOpacity>
-        )}
-        contentContainerStyle={{ gap: 10 }}
-      />
-      <Banner />
-      <PostLack />
-      <DateBox />
-      <Sponsored />
-      <Hotbanner />
+        ))}
+      </ScrollView>
+
+      {/* Nếu có danh mục được chọn, chỉ hiển thị sản phẩm của danh mục đó */}
+      {selectedCategory !== null ? (
+        filteredProducts.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text>Không có sản phẩm trong danh mục này</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={filteredProducts}
+            keyExtractor={(item) => item.product_id.toString()}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={{ width: "47%" }}
+                onPress={() => handleProductPress(item.product_id.toString())}
+              >
+                <Product product={item} />
+              </TouchableOpacity>
+            )}
+            numColumns={2}
+            columnWrapperStyle={styles.columnWrapper}
+            contentContainerStyle={{ paddingBottom: 20 }}
+          />
+        )
+      ) : (
+        <ScrollView>
+          {/* Banner tự động cuộn */}
+          <FlatList
+            ref={flatListRef}
+            data={postImages}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            pagingEnabled
+            snapToAlignment="start"
+            decelerationRate="fast"
+            snapToInterval={WIDTH}
+            renderItem={({ item }) => (
+              <View style={{ width: WIDTH }}>
+                <PostSale
+                  img={item.img}
+                  sale_off={item.sale_off}
+                  describe={item.describe}
+                />
+              </View>
+            )}
+            keyExtractor={(item) => item.sale_off}
+            onScroll={handleScroll}
+            contentContainerStyle={{ marginBottom: 10 }}
+          />
+          <View style={{ flexDirection: "row", justifyContent: "center" }}>
+            {postImages.map((_, index) => (
+              <View
+                key={index}
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: 5,
+                  backgroundColor: activeIndex === index ? "#FFA3B3" : "#DEDBDB",
+                  marginHorizontal: 5,
+                }}
+              />
+            ))}
+          </View>
+
+          {/* Timer */}
+          <TimerBox
+            house={timerBox.house}
+            minute={timerBox.minute}
+            second={timerBox.second}
+          />
+
+          {/* Danh sách sản phẩm ban đầu (hiển thị tất cả) */}
+          <FlatList
+            data={filteredProducts}
+            keyExtractor={(item) => item.product_id.toString()}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={{ width: "47%" }}
+                onPress={() => handleProductPress(item.product_id.toString())}
+              >
+                <Product product={item} />
+              </TouchableOpacity>
+            )}
+            numColumns={2}
+            columnWrapperStyle={styles.columnWrapper}
+            contentContainerStyle={{ paddingBottom: 20 }}
+          />
+
+          {/* Các thành phần khác */}
+          <Banner />
+          <PostLack />
+          <DateBox />
+          <Sponsored />
+          <Hotbanner />
+        </ScrollView>
+      )}
     </ScrollView>
   );
 };
 
-export default home;
+export default Home;
 
 const styles = StyleSheet.create({
   container: {
@@ -229,15 +309,28 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 10,
     marginBottom: 15,
+    padding: 5
   },
   categoriesItem: {
     alignItems: "center",
-    marginTop: 10,
     marginRight: 18,
+  },
+  selectedCategory: {
+    backgroundColor: "#FFA3B3",
+    borderRadius: 10,
   },
   textCategory: {
     fontSize: 10,
     color: "#21003D",
     marginVertical: 3,
+  },
+  columnWrapper: {
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+  emptyContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 20,
   },
 });
