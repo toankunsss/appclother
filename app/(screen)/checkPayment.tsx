@@ -6,41 +6,99 @@ import {
   Image,
   Modal,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import FontAwesome6 from "react-native-vector-icons/FontAwesome6";
 import { Link, useRouter, useLocalSearchParams } from "expo-router";
 import Ionicons from "react-native-vector-icons/Ionicons";
-import { papal, visa, maestro, appleImag } from "@/contants/image/img";
+import { papal, visa, maestro } from "@/contants/image/img";
 import { useCart } from "@/context/contexCart";
+import { useAuth } from "@/context/contextAuth";
+import { NotificationContext } from "@/context/contextNotification";
 import { check } from "@/contants/image/img";
-const checkPayment = () => {
+import { addOrderAPI, addOrderItemAPI } from "@/api/api";
+
+const CheckPayment = () => {
   const router = useRouter();
   const { total, selectedItems } = useLocalSearchParams();
-  const { removeFromCart } = useCart();
+  const { removeFromCart, cartItems } = useCart();
+  const { user } = useAuth();
+  const { addNotification } = useContext(NotificationContext);
   const parsedSelectedItems = selectedItems ? JSON.parse(selectedItems) : [];
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+
   const handlePress = (paymentType: any) => {
     setSelectedPayment(paymentType);
   };
 
-  const handlePayment = () => {
+  const handlePayment = async () => {
     if (!selectedPayment) {
       alert("Please select a payment method");
       return;
     }
-    // Giả lập thanh toán thành công
-    setShowSuccessModal(true);
+
+    if (!user) {
+      alert("Please log in to proceed with payment");
+      return;
+    }
+
+    try {
+      // Tạo đơn hàng mới
+      const orderData = {
+        user_id: user.uid,
+        total_amount: parseFloat(total),
+        shipping_address: "Default Address",
+        created_at: new Date().toISOString(),
+      };
+      const orderResponse = await addOrderAPI(orderData);
+
+      // Thu thập thông tin sản phẩm đã mua
+      const purchasedItems = [];
+      for (const cartId of parsedSelectedItems) {
+        const cartItem = cartItems.find((item) => item.cart_id === cartId);
+        if (cartItem) {
+          await addOrderItemAPI({
+            order_id: orderResponse.id,
+            product_id: cartItem.product_id,
+            quantity: cartItem.quantity,
+            price: cartItem.price,
+          });
+          purchasedItems.push({
+            product_id: cartItem.product_id,
+            name: cartItem.name || "Unknown Product", // Giả sử cartItem có name
+            price: cartItem.price,
+            quantity: cartItem.quantity,
+          });
+        }
+      }
+
+      // Xóa các sản phẩm đã thanh toán khỏi giỏ hàng
+      for (const cartId of parsedSelectedItems) {
+        await removeFromCart(cartId);
+      }
+
+      // Thêm thông báo mới với thông tin sản phẩm
+      addNotification({
+        id: `notif_${Date.now()}`,
+        type: "purchase",
+        items: purchasedItems,
+        total: parseFloat(total).toFixed(2),
+        timestamp: new Date().toISOString(),
+      });
+
+      // Hiển thị modal thành công
+      setShowSuccessModal(true);
+    } catch (error) {
+      console.error("Error processing payment:", error);
+      alert("Failed to process payment. Please try again.");
+    }
   };
 
-  const handleContinueAfterSuccess = async () => {
-    // Xóa các sản phẩm đã thanh toán khỏi giỏ hàng
-    for (const cartId of parsedSelectedItems) {
-      await removeFromCart(cartId);
-    }
+  const handleContinueAfterSuccess = () => {
     setShowSuccessModal(false);
     router.navigate("/(drawer)/(tabs)/shop");
   };
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -58,15 +116,17 @@ const checkPayment = () => {
       <View style={styles.cartDetail}>
         <View style={[styles.row]}>
           <Text style={styles.text}>Order</Text>
-          <Text style={styles.text}>{parseFloat(total) - 30}</Text>
+          <Text style={styles.text}>{(parseFloat(total) - 30).toFixed(2)}</Text>
         </View>
         <View style={[styles.row]}>
           <Text style={styles.text}>Shipping</Text>
-          <Text style={styles.text}>30</Text>
+          <Text style={styles.text}>30.00</Text>
         </View>
         <View style={[styles.row]}>
           <Text style={[styles.text, { color: "black" }]}>Total</Text>
-          <Text style={[styles.text, { color: "black" }]}>{total}</Text>
+          <Text style={[styles.text, { color: "black" }]}>
+            {parseFloat(total).toFixed(2)}
+          </Text>
         </View>
       </View>
 
@@ -108,6 +168,12 @@ const checkPayment = () => {
           <Image source={papal} />
           <Text style={{ color: "#c4c4c4" }}>**** **** **** 2709</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.row, styles.cart, { backgroundColor: "#ccc" }]}
+        >
+          <Ionicons name="add-circle-outline" size={30} />
+          <Text style={{ color: "#fff" }}>Add Card</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Continue Button */}
@@ -137,7 +203,7 @@ const checkPayment = () => {
               <Image
                 source={check}
                 style={{ width: 50, height: 50 }}
-                resizeMode="contain"
+                resizeMode="stretch"
               />
             </View>
             <Text style={styles.successText}>Payment done successfully.</Text>
@@ -154,7 +220,7 @@ const checkPayment = () => {
   );
 };
 
-export default checkPayment;
+export default CheckPayment;
 
 const styles = StyleSheet.create({
   container: {
@@ -226,20 +292,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "500",
     marginBottom: 20,
-  },
-  paymentInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  paymentIcon: {
-    width: 30,
-    height: 20,
-    marginRight: 10,
-  },
-  cardNumber: {
-    fontSize: 16,
-    color: "#666",
   },
   continueButton: {
     backgroundColor: "#F83758",

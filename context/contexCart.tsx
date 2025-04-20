@@ -77,7 +77,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     };
     fetchCart();
   }, [user]);
-
   const addToCart = async (item: Omit<CartItem, "cart_id" | "serverId">) => {
     const existingItem = cartItems.find(
       (i) =>
@@ -86,6 +85,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         i.color === item.color &&
         i.user_id === item.user_id
     );
+    const cartItemsCount = cartItems.length;
 
     if (existingItem) {
       const updatedQuantity = existingItem.quantity + item.quantity;

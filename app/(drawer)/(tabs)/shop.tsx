@@ -148,7 +148,6 @@ export default function Shop() {
             )}
           />
         </View>
-        <Text>{selectedItems}</Text>
         {selectedItems.length > 0 && (
           <Procceed
             total={totalAmount.toFixed(2)}

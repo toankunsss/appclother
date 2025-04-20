@@ -17,16 +17,19 @@ export const getProducts = async () => {
 
 export const getProductById = async (productId) => {
   try {
-    const response = await BASE_URL.get(`/products/${productId}`);
-    if (response.data.length === 0) {
+    const response = await BASE_URL.get(`/products?product_id=${productId}`);
+
+    if (!response.data || response.data.length === 0) {
       throw new Error("Không tìm thấy sản phẩm với ID đã cho.");
     }
-    return response.data;
+
+    return response.data[0]; // Trả về sản phẩm đầu tiên
   } catch (error) {
-    console.error(`Lỗi khi lấy sản phẩm với ID ${productId}:`, error);
+    console.log(`Lỗi khi lấy sản phẩm với ID ${productId}:`, error);
     throw error;
   }
 };
+
 // Get categories
 export const getCategories = async () => {
   try {
@@ -117,10 +120,10 @@ export const getCartByUserId = async (user_id) => {
           cartItem.discount ||
           (product
             ? `${(
-              ((product.original_price - product.sale_price) /
-                product.original_price) *
-              100
-            ).toFixed(0)}%`
+                ((product.original_price - product.sale_price) /
+                  product.original_price) *
+                100
+              ).toFixed(0)}%`
             : "0%"),
       };
     });
@@ -188,8 +191,10 @@ export const updateCustomerInfo = async (uid, updatedData) => {
       city: updatedData.city || currentUserData.city,
       state: updatedData.state || currentUserData.state,
       country: updatedData.country || currentUserData.country,
-      bankAccountNumber: updatedData.bankAccountNumber || currentUserData.bankAccountNumber,
-      accountHolderName: updatedData.accountHolderName || currentUserData.accountHolderName,
+      bankAccountNumber:
+        updatedData.bankAccountNumber || currentUserData.bankAccountNumber,
+      accountHolderName:
+        updatedData.accountHolderName || currentUserData.accountHolderName,
       ifscCode: updatedData.ifscCode || currentUserData.ifscCode,
       image: updatedData.image || currentUserData.image,
     };
@@ -266,5 +271,110 @@ export const getWishlistByUserId = async (user_id) => {
   } catch (error) {
     console.error("Lỗi khi lấy wishlist:", error);
     return [];
+  }
+};
+
+// api.js
+export const getProductsByPriceRange = async (minPrice, maxPrice) => {
+  try {
+    const response = await BASE_URL.get(
+      `/products?sale_price_gte=${minPrice}&sale_price_lte=${maxPrice}`
+    );
+    console.log("Dữ liệu trả về:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi lấy sản phẩm theo giá:", error.message);
+    if (error.response) {
+      console.error("Response error:", error.response.data);
+    }
+    return [];
+  }
+};
+
+// Update product search function
+export const searchProductsByQuery = async (query) => {
+  try {
+    const response = await BASE_URL.get('/products');
+    const searchQuery = query.toLowerCase();
+    
+    const filteredProducts = response.data.filter(product =>
+      product.name.toLowerCase().includes(searchQuery) ||
+      product.description.toLowerCase().includes(searchQuery)
+    );
+    
+    return filteredProducts;
+  } catch (error) {
+    console.error("Error searching products:", error);
+    return [];
+  }
+};
+
+export const searchProductsWithFilters = async (query, filters) => {
+  try {
+    const response = await BASE_URL.get('/products');
+    let filteredProducts = response.data;
+
+    // Text search
+    if (query) {
+      const searchQuery = query.toLowerCase();
+      filteredProducts = filteredProducts.filter(product => 
+        product.name.toLowerCase().includes(searchQuery) ||
+        product.description.toLowerCase().includes(searchQuery)
+      );
+    }
+
+    // Price range filter
+    if (filters.priceRange) {
+      const { min, max } = filters.priceRange;
+      filteredProducts = filteredProducts.filter(product => {
+        const price = parseFloat(product.sale_price);
+        return price >= min && price <= max;
+      });
+    }
+
+    // Category filter
+    if (filters.category) {
+      filteredProducts = filteredProducts.filter(product =>
+        product.category_id.toString() === filters.category
+      );
+    }
+
+    console.log('Price range:', filters.priceRange);
+    console.log('Filtered products:', filteredProducts);
+    return filteredProducts;
+  } catch (error) {
+    console.error("Error searching products:", error);
+    return [];
+  }
+};
+
+// Add order API
+export const addOrderAPI = async (orderData) => {
+  try {
+    const response = await BASE_URL.post("/orders", {
+      user_id: orderData.user_id,
+      total_amount: orderData.total_amount,
+      status: orderData.status || "pending",
+      shipping_address: orderData.shipping_address,
+      created_at: orderData.created_at || new Date().toISOString(),
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi tạo đơn hàng:", error);
+    throw error;
+  }
+};
+export const addOrderItemAPI = async (orderItemData) => {
+  try {
+    const response = await BASE_URL.post("/order_items", {
+      order_id: orderItemData.order_id,
+      product_id: orderItemData.product_id,
+      quantity: orderItemData.quantity,
+      price: orderItemData.price,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi thêm mục đơn hàng:", error);
+    throw error;
   }
 };

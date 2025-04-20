@@ -1,4 +1,10 @@
-import { StyleSheet, Text, View, FlatList, TouchableOpacity } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  FlatList,
+  TouchableOpacity,
+} from "react-native";
 import React from "react";
 import Product from "@/component/product";
 import { useRouter } from "expo-router";

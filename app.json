@@ -36,6 +36,7 @@
       "output": "static",
       "favicon": ""
     },
+
     "plugins": [
       "expo-router",
       [

@@ -13,7 +13,7 @@ const Procceed = ({ ship, total, procceed }: any) => {
   const [discount, setDiscount] = useState(0);
   const applyPromoCode = () => {
     // Giả lập logic kiểm tra mã promo
-    if (promoCode === "DISCOUNT10") {
+    if (promoCode === "toan") {
       setDiscount(total * 0.1); // Giảm 10%
     } else {
       alert("Invalid promo code");
@@ -22,7 +22,12 @@ const Procceed = ({ ship, total, procceed }: any) => {
 
   return (
     <View
-      style={{ width: WIDTH, padding: 15, backgroundColor: "#fff", gap: 5 }}
+      style={{
+        width: WIDTH,
+        padding: 15,
+        backgroundColor: "#fff",
+        gap: 5,
+      }}
     >
       <View style={[styles.row, { gap: 10 }]}>
         <TextInput

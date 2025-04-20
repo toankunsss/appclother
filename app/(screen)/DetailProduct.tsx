@@ -20,6 +20,7 @@ import {
 } from "react-native-reanimated";
 import Animated from "react-native-reanimated";
 import { useAnimatedStyle } from "react-native-reanimated";
+import { useCart } from "@/context/contexCart";
 const WIDTH = Dimensions.get("window").width;
 const HEIGHT = Dimensions.get("window").height;
 
@@ -47,6 +48,8 @@ const CustomRating = ({ rating, maxStars = 5, starSize = 15 }) => {
 };
 
 const Viewshop = () => {
+  const { cartItems } = useCart();
+  const totalQuantity = cartItems.length;
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [product, setProduct] = useState<any>(null);
@@ -63,7 +66,6 @@ const Viewshop = () => {
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
   const [showAnimBadge, setShowAnimBadge] = useState(false);
-
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
       { translateX: animatedX.value },
@@ -90,7 +92,8 @@ const Viewshop = () => {
     opacity.value = withTiming(0, { duration: 500 });
   };
 
-  const handleAddToCartSuccess = () => {
+  const handleAddToCartSuccess = (event: any) => {
+    const { locationX, locationY } = event;
     setShowAnimBadge(true);
     cartIconRef.current?.measure(
       (
@@ -101,12 +104,8 @@ const Viewshop = () => {
         px: number,
         py: number
       ) => {
-        // Start animation from center of screen
-        const startX = WIDTH / 2;
-        const startY = HEIGHT / 2;
-
-        animatedX.value = startX;
-        animatedY.value = startY;
+        animatedX.value = locationX;
+        animatedY.value = locationY;
         scale.value = 1;
         opacity.value = 1;
 
@@ -215,12 +214,14 @@ const Viewshop = () => {
           <TouchableOpacity onPress={() => router.back()}>
             <Ionicons name="chevron-back" size={28} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.navigate("/shop")}>
+          <TouchableOpacity
+            onPress={() => router.navigate("/(drawer)/(tabs)/shop")}
+          >
             <View ref={cartIconRef} style={styles.cartIcon}>
               <FontAwesome6 name="cart-shopping" size={20} />
-              {countCart > 0 && (
+              {totalQuantity > 0 && (
                 <View style={styles.badge}>
-                  <Text style={styles.badgeText}>{countCart}</Text>
+                  <Text style={styles.badgeText}>{totalQuantity}</Text>
                 </View>
               )}
             </View>

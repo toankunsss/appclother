@@ -2,7 +2,11 @@ import { StyleSheet, Text, View, Image, TouchableOpacity } from "react-native";
 import React, { useState, useEffect } from "react";
 import { Rating } from "react-native-ratings";
 import Icon from "react-native-vector-icons/FontAwesome";
-import { addToWishlistAPI, removeFromWishlistAPI, getWishlistByUserId } from "@/api/api";
+import {
+  addToWishlistAPI,
+  removeFromWishlistAPI,
+  getWishlistByUserId,
+} from "@/api/api";
 import { useAuth } from "@/context/contextAuth";
 import { useWishlist } from "@/context/WishlistContext"; // Import useWishlist
 
@@ -123,7 +127,7 @@ const styles = StyleSheet.create({
   heartIcon: {
     position: "absolute",
     top: 10,
-    right: 10,
+    left: 10,
     backgroundColor: "rgba(255, 255, 255, 0.8)",
     borderRadius: 15,
     padding: 5,

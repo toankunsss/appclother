@@ -73,11 +73,14 @@ const Home = () => {
   });
   const [products, setProducts] = useState<ProductType[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<ProductType[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<number | null>(null); // Danh mục được chọn
+  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const router = useRouter();
-  const flatListRef = useRef<FlatList>(null);
+  const bannerFlatListRef = useRef<FlatList>(null);
 
-  // Lấy dữ liệu ban đầu
+  // Data for the main FlatList
+  const [sectionData, setSectionData] = useState<any[]>([]);
+
+  // Fetch initial data
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -87,32 +90,63 @@ const Home = () => {
         setProducts(productsData);
         setFilteredProducts(productsData);
         setLoading(false);
+        // Initialize section data
+        updateSectionData(productsData, null);
       } catch (error) {
-        console.error("Lỗi khi lấy dữ liệu:", error);
+        console.error("Error fetching data:", error);
         setLoading(false);
       }
     };
     fetchData();
   }, []);
 
-  // Lọc sản phẩm khi danh mục được chọn
+  // Update section data based on selected category
+  const updateSectionData = (
+    products: ProductType[],
+    categoryId: number | null
+  ) => {
+    if (categoryId !== null) {
+      const filtered = products.filter(
+        (product) => product.category_id === categoryId
+      );
+      setSectionData([
+        { type: "categories", data: categories },
+        { type: "products", data: filtered },
+      ]);
+    } else {
+      setSectionData([
+        { type: "categories", data: categories },
+        { type: "banner", data: postImages },
+        { type: "timer", data: timerBox },
+        { type: "products", data: products },
+        { type: "banner_component", data: {} },
+        { type: "post_lack", data: {} },
+        { type: "date_box", data: {} },
+        { type: "sponsored", data: {} },
+        { type: "hot_banner", data: {} },
+      ]);
+    }
+  };
+
+  // Filter products when category is selected
   useEffect(() => {
     if (selectedCategory === null) {
-      setFilteredProducts(products); // Hiển thị tất cả sản phẩm nếu không có danh mục được chọn
+      setFilteredProducts(products);
     } else {
       const filtered = products.filter(
         (product) => product.category_id === selectedCategory
       );
       setFilteredProducts(filtered);
     }
+    updateSectionData(products, selectedCategory);
   }, [selectedCategory, products]);
 
-  // Xử lý khi nhấn vào danh mục
+  // Handle category press
   const handleCategoryPress = (categoryId: number) => {
     setSelectedCategory(categoryId === selectedCategory ? null : categoryId);
   };
 
-  // Xử lý khi nhấn vào sản phẩm
+  // Handle product press
   const handleProductPress = (productId: string) => {
     router.push({
       pathname: "/(screen)/DetailProduct",
@@ -120,7 +154,7 @@ const Home = () => {
     });
   };
 
-  // Timer cho TimerBox
+  // Timer logic
   useEffect(() => {
     const interval = setInterval(() => {
       setTimerBox((prevState) => {
@@ -143,22 +177,23 @@ const Home = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Auto-scroll cho banner
+  // Auto-scroll for banner
   useEffect(() => {
     const autoScroll = setInterval(() => {
-      if (flatListRef.current) {
+      if (bannerFlatListRef.current) {
         const nextIndex = (activeIndex + 1) % postImages.length;
-        flatListRef.current.scrollToIndex({
+        bannerFlatListRef.current.scrollToIndex({
           index: nextIndex,
           animated: true,
         });
+        setActiveIndex(nextIndex);
       }
     }, 1000);
 
     return () => clearInterval(autoScroll);
   }, [activeIndex]);
 
-  const handleScroll = (event: any) => {
+  const handleBannerScroll = (event: any) => {
     const contentOffsetX = event.nativeEvent.contentOffset.x;
     const index = Math.round(contentOffsetX / WIDTH);
     setActiveIndex(index);
@@ -167,130 +202,143 @@ const Home = () => {
   if (loading) {
     return (
       <View style={styles.container}>
-        <Text>Đang tải...</Text>
+        <Text>Loading...</Text>
       </View>
     );
   }
 
-  return (
-    <ScrollView style={styles.container}>
-      {/* Danh mục */}
-      <ScrollView
+  // Render categories section
+  const renderCategories = (categories: CategoryType[]) => (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={styles.featuredStyle}
+    >
+      {categories.map((item) => (
+        <TouchableOpacity
+          key={item.category_id}
+          style={[
+            styles.categoriesItem,
+            selectedCategory === item.category_id && styles.selectedCategory,
+          ]}
+          onPress={() => handleCategoryPress(item.category_id)}
+        >
+          <Image source={{ uri: item.img_URI }} style={styles.imageStyle} />
+          <Text style={styles.textCategory}>{item.name}</Text>
+        </TouchableOpacity>
+      ))}
+    </ScrollView>
+  );
+
+  // Render banner section
+  const renderBanner = (data: typeof postImages) => (
+    <View>
+      <FlatList
+        ref={bannerFlatListRef}
+        data={data}
         horizontal
         showsHorizontalScrollIndicator={false}
-        style={styles.featuredStyle}
-      >
-        {categories.map((item) => (
-          <TouchableOpacity
-            key={item.category_id}
-            style={[
-              styles.categoriesItem,
-              selectedCategory === item.category_id && styles.selectedCategory,
-            ]}
-            onPress={() => handleCategoryPress(item.category_id)}
-          >
-            <Image source={{ uri: item.img_URI }} style={styles.imageStyle} />
-            <Text style={styles.textCategory}>{item.name}</Text>
-          </TouchableOpacity>
+        pagingEnabled
+        snapToAlignment="start"
+        decelerationRate="fast"
+        snapToInterval={WIDTH}
+        renderItem={({ item }) => (
+          <View style={{ width: WIDTH }}>
+            <PostSale
+              img={item.img}
+              sale_off={item.sale_off}
+              describe={item.describe}
+            />
+          </View>
+        )}
+        keyExtractor={(item) => item.sale_off}
+        onScroll={handleBannerScroll}
+        contentContainerStyle={{ marginBottom: 10 }}
+      />
+      <View style={{ flexDirection: "row", justifyContent: "center" }}>
+        {data.map((_, index) => (
+          <View
+            key={index}
+            style={{
+              width: 10,
+              height: 10,
+              borderRadius: 5,
+              backgroundColor: activeIndex === index ? "#FFA3B3" : "#DEDBDB",
+              marginHorizontal: 5,
+            }}
+          />
         ))}
-      </ScrollView>
+      </View>
+    </View>
+  );
 
-      {/* Nếu có danh mục được chọn, chỉ hiển thị sản phẩm của danh mục đó */}
-      {selectedCategory !== null ? (
-        filteredProducts.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Text>Không có sản phẩm trong danh mục này</Text>
-          </View>
-        ) : (
-          <FlatList
-            data={filteredProducts}
-            keyExtractor={(item) => item.product_id.toString()}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={{ width: "47%" }}
-                onPress={() => handleProductPress(item.product_id.toString())}
-              >
-                <Product product={item} />
-              </TouchableOpacity>
-            )}
-            numColumns={2}
-            columnWrapperStyle={styles.columnWrapper}
-            contentContainerStyle={{ paddingBottom: 20 }}
-          />
-        )
+  // Render products section
+  const renderProducts = (products: ProductType[]) => (
+    <View>
+      {products.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text>No products in this category</Text>
+        </View>
       ) : (
-        <ScrollView>
-          {/* Banner tự động cuộn */}
-          <FlatList
-            ref={flatListRef}
-            data={postImages}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            pagingEnabled
-            snapToAlignment="start"
-            decelerationRate="fast"
-            snapToInterval={WIDTH}
-            renderItem={({ item }) => (
-              <View style={{ width: WIDTH }}>
-                <PostSale
-                  img={item.img}
-                  sale_off={item.sale_off}
-                  describe={item.describe}
-                />
-              </View>
-            )}
-            keyExtractor={(item) => item.sale_off}
-            onScroll={handleScroll}
-            contentContainerStyle={{ marginBottom: 10 }}
-          />
-          <View style={{ flexDirection: "row", justifyContent: "center" }}>
-            {postImages.map((_, index) => (
-              <View
-                key={index}
-                style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: 5,
-                  backgroundColor: activeIndex === index ? "#FFA3B3" : "#DEDBDB",
-                  marginHorizontal: 5,
-                }}
-              />
-            ))}
-          </View>
+        <FlatList
+          data={products}
+          keyExtractor={(item) => item.product_id.toString()}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={{ width: "47%" }}
+              onPress={() => handleProductPress(item.product_id.toString())}
+            >
+              <Product product={item} />
+            </TouchableOpacity>
+          )}
+          numColumns={2}
+          columnWrapperStyle={styles.columnWrapper}
+          contentContainerStyle={{ paddingBottom: 20 }}
+          scrollEnabled={false} // Disable scrolling since main FlatList handles it
+        />
+      )}
+    </View>
+  );
 
-          {/* Timer */}
+  // Render item for main FlatList
+  const renderSection = ({ item }: { item: any }) => {
+    switch (item.type) {
+      case "categories":
+        return renderCategories(item.data);
+      case "banner":
+        return renderBanner(item.data);
+      case "timer":
+        return (
           <TimerBox
             house={timerBox.house}
             minute={timerBox.minute}
             second={timerBox.second}
           />
+        );
+      case "products":
+        return renderProducts(item.data);
+      case "banner_component":
+        return <Banner />;
+      case "post_lack":
+        return <PostLack />;
+      case "date_box":
+        return <DateBox />;
+      case "sponsored":
+        return <Sponsored />;
+      case "hot_banner":
+        return <Hotbanner />;
+      default:
+        return null;
+    }
+  };
 
-          {/* Danh sách sản phẩm ban đầu (hiển thị tất cả) */}
-          <FlatList
-            data={filteredProducts}
-            keyExtractor={(item) => item.product_id.toString()}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={{ width: "47%" }}
-                onPress={() => handleProductPress(item.product_id.toString())}
-              >
-                <Product product={item} />
-              </TouchableOpacity>
-            )}
-            numColumns={2}
-            columnWrapperStyle={styles.columnWrapper}
-            contentContainerStyle={{ paddingBottom: 20 }}
-          />
-
-          {/* Các thành phần khác */}
-          <Banner />
-          <PostLack />
-          <DateBox />
-          <Sponsored />
-          <Hotbanner />
-        </ScrollView>
-      )}
-    </ScrollView>
+  return (
+    <FlatList
+      data={sectionData}
+      renderItem={renderSection}
+      keyExtractor={(item, index) => `${item.type}-${index}`}
+      contentContainerStyle={styles.container}
+    />
   );
 };
 
@@ -309,7 +357,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 10,
     marginBottom: 15,
-    padding: 5
+    padding: 5,
   },
   categoriesItem: {
     alignItems: "center",

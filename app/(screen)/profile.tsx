@@ -12,8 +12,8 @@ import { useRouter } from "expo-router";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import CustomButton from "@/component/customButton";
 import FormField from "@/component/formfield";
-import { auth } from "../../firebase/firebaseConfig";
 import { getUserById, updateCustomerInfo } from "@/api/api";
+import { useAuth } from "@/context/contextAuth";
 import { ggImag } from "@/contants/image/img";
 const Profile = () => {
   const router = useRouter();
@@ -29,17 +29,16 @@ const Profile = () => {
     ifscCode: "",
   });
   const [loading, setLoading] = useState(false);
-
+  const { user } = useAuth();
   useEffect(() => {
     const fetchUserData = async () => {
-      const user = auth.currentUser;
       if (user) {
         try {
           const data = await getUserById(user.uid);
-          console.log("Dữ liệu người dùng được lấy:", data);
+          console.log("Dữ liệu người dùng được lấy:", user);
           setUserData(data);
         } catch (error) {
-          console.error("Lỗi khi lấy dữ liệu người dùng:", error);
+          console.error("Lỗi khi lấy dữ liệu người dùng:", user);
         }
       }
     };
@@ -47,7 +46,6 @@ const Profile = () => {
   }, []);
 
   const handleSave = async () => {
-    const user = auth.currentUser;
     if (user) {
       setLoading(true);
       try {
@@ -108,7 +106,7 @@ const Profile = () => {
           title="Email"
           value={userData.email}
           placeholder="Your Email"
-          handldeChangeText={() => { }} // Không cho phép chỉnh sửa email
+          handldeChangeText={() => {}} // Không cho phép chỉnh sửa email
           otherStyles={styles.textInputStyle}
           keyboardType="email-address"
           editable={false}
@@ -117,7 +115,7 @@ const Profile = () => {
           title="Password"
           value="********"
           placeholder="Password"
-          handldeChangeText={() => { }}
+          handldeChangeText={() => {}}
           otherStyles={styles.textInputStyle}
           secureTextEntry={true}
           editable={false}

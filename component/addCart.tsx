@@ -19,7 +19,7 @@ const AddCart: React.FC<AddCartProps> = ({
   onAddSuccess,
 }) => {
   const [quantity, setQuantity] = useState(1);
-  const { addToCart } = useCart();
+  const { addToCart, cartItemsCount } = useCart();
   const { user } = useAuth();
 
   const handleAddToCart = async (event: any) => {
@@ -57,7 +57,7 @@ const AddCart: React.FC<AddCartProps> = ({
       size: selectedSize || undefined,
       color: selectedColor || undefined,
       user_id: user?.uid || "",
-      product_id: product.id,
+      product_id: product.product_id,
       added_at: new Date().toISOString(),
     };
 
@@ -87,7 +87,6 @@ const AddCart: React.FC<AddCartProps> = ({
       setQuantity(quantity - 1);
     }
   };
-
   return (
     <View style={styles.container}>
       <View style={styles.quantityContainer}>

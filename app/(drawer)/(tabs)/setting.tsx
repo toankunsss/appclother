@@ -15,17 +15,46 @@ import { auth } from "@/firebase/firebaseConfig";
 import { getUserById } from "@/api/api"; // Import your API function to get user data
 import { ggImag } from "@/contants/image/img"; // Import your logo image
 export default function ProfileScreen() {
-
   const menuItems = [
-    { icon: "clock", label: "Order History", screen: "orderHistory" },
-    { icon: "credit-card", label: "Payment Methods", screen: "paymentMethods" },
-    { icon: "map-pin", label: "Delivery Addresses", screen: "addresses" },
-    { icon: "heart", label: "Favorites", screen: "favorites" },
-    { icon: "settings", label: "Settings", screen: "settings" },
-    { icon: "help-circle", label: "Help & Support", screen: "support" },
+    {
+      icon: "clock",
+      label: "Order History",
+      screen: "orderHistory",
+      onPress: () => router.push("/(screen)/oders"),
+    },
+    {
+      icon: "credit-card",
+      label: "Payment Methods",
+      screen: "paymentMethods",
+      onPress: () => router.push("/(screen)/add-Payment"),
+    },
+    {
+      icon: "map-pin",
+      label: "Delivery Addresses",
+      screen: "addresses",
+      onPress: () => router.push("/(screen)/address"),
+    },
+    {
+      icon: "heart",
+      label: "Wish List",
+      screen: "WishList",
+      onPress: () => router.replace("/(drawer)/(tabs)/Wishlist"),
+    },
+    {
+      icon: "settings",
+      label: "Settings",
+      screen: "settings",
+      onPress: () => router.push("/"),
+    },
+    {
+      icon: "help-circle",
+      label: "Help & Support",
+      screen: "support",
+      onPress: () => router.push("/"),
+    },
   ];
   const router = useRouter();
-  const { logout } = useAuth(); // Import the logout function from context
+  const { logout, user } = useAuth(); // Import the logout function from context
   const [userData, setUserData] = useState({
     email: "",
     pincode: "",
@@ -39,7 +68,6 @@ export default function ProfileScreen() {
   });
   useEffect(() => {
     const fetchUserData = async () => {
-      const user = auth.currentUser;
       if (user) {
         try {
           const data = await getUserById(user.uid);
@@ -59,14 +87,21 @@ export default function ProfileScreen() {
           <Image source={ggImag} style={{ width: 80, height: 80 }} />
         </View>
         <Text style={styles.email}>{userData.email}</Text>
-        <TouchableOpacity style={styles.editButton} onPress={() => router.push("/(screen)/profile")}>
+        <TouchableOpacity
+          style={styles.editButton}
+          onPress={() => router.push("/(screen)/profile")}
+        >
           <Text style={styles.editButtonText}>Edit Profile</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.menuContainer}>
         {menuItems.map((item, index) => (
-          <TouchableOpacity key={index} style={styles.menuItem}>
+          <TouchableOpacity
+            key={index}
+            style={styles.menuItem}
+            onPress={item.onPress}
+          >
             <View style={styles.menuItemLeft}>
               <Feather name={item.icon} size={22} color="#FF3B30" />
               <Text style={styles.menuItemText}>{item.label}</Text>
@@ -76,11 +111,13 @@ export default function ProfileScreen() {
         ))}
       </View>
 
-      <TouchableOpacity style={styles.logoutButton} onPress={async () => {
-        await logout(); // Call the logout function from context 
-        router.replace("/(auth)/sign-in"); // Navigate to the sign-in screen
-      }
-      }>
+      <TouchableOpacity
+        style={styles.logoutButton}
+        onPress={async () => {
+          await logout(); // Call the logout function from context
+          router.replace("/(auth)/sign-in"); // Navigate to the sign-in screen
+        }}
+      >
         <Feather name="log-out" size={22} color="#FF3B30" />
         <Text style={styles.logoutText}>Log Out</Text>
       </TouchableOpacity>

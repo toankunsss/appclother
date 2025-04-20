@@ -2,6 +2,7 @@ import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import React from "react";
 import SimpleLineIcons from "react-native-vector-icons/SimpleLineIcons";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
+import { router } from "expo-router";
 const address = () => {
   return (
     <>
@@ -33,7 +34,10 @@ const address = () => {
         </Text>
         <Text style={{ fontSize: 12 }}>216 St Paul's Rd, London</Text>
         <Text style={{ fontSize: 12 }}>Contact: </Text>
-        <TouchableOpacity style={{ position: "absolute", right: 5, top: 5 }}>
+        <TouchableOpacity
+          style={{ position: "absolute", right: 5, top: 5 }}
+          onPress={() => router.push("/(screen)/address")}
+        >
           <MaterialCommunityIcons name="square-edit-outline" size={20} />
         </TouchableOpacity>
       </View>

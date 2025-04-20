@@ -7,6 +7,7 @@ export default function TabLayout() {
     <Tabs
       screenOptions={({ route }) => ({
         headerShown: false,
+        swipeEnabled: false, // Disable swipe gestures between tabs
         tabBarStyle: {
           height: 70,
           justifyContent: "center",
@@ -32,10 +33,10 @@ export default function TabLayout() {
               iconName = "shopping-cart";
               break;
             case "search":
-              iconName = "search";
+              iconName = "bell";
               break;
             case "setting":
-              iconName = "settings";
+              iconName = "user";
               break;
             default:
               break;
@@ -49,7 +50,7 @@ export default function TabLayout() {
                   width: 60,
                   height: 60,
                   borderRadius: 30,
-                  backgroundColor: focused ? "#EB3030" : "#FFFFFF", // Chuyển màu nền khi chọn
+                  backgroundColor: focused ? "#EB3030" : "#FFFFFF",
                   justifyContent: "center",
                   alignItems: "center",
                   top: 2,
@@ -74,8 +75,8 @@ export default function TabLayout() {
       <Tabs.Screen name="home" options={{ title: "Home" }} />
       <Tabs.Screen name="Wishlist" options={{ title: "Wishlist" }} />
       <Tabs.Screen name="shop" options={{ title: "" }} />
-      <Tabs.Screen name="search" options={{ title: "Search" }} />
-      <Tabs.Screen name="setting" options={{ title: "Settings" }} />
+      <Tabs.Screen name="search" options={{ title: "Notification" }} />
+      <Tabs.Screen name="setting" options={{ title: "user" }} />
     </Tabs>
   );
 }
