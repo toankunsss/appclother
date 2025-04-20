@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -8,28 +8,28 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function AddPaymentScreen() {
   const router = useRouter();
-  const [cardNumber, setCardNumber] = useState('');
-  const [expiryDate, setExpiryDate] = useState('');
-  const [cvv, setCvv] = useState('');
-  const [cardHolder, setCardHolder] = useState('');
+  const [cardNumber, setCardNumber] = useState("");
+  const [expiryDate, setExpiryDate] = useState("");
+  const [cvv, setCvv] = useState("");
+  const [cardHolder, setCardHolder] = useState("");
 
   const formatCardNumber = (text: string) => {
-    const cleaned = text.replace(/\s/g, '');
-    const formatted = cleaned.match(/.{1,4}/g)?.join(' ') || '';
+    const cleaned = text.replace(/\s/g, "");
+    const formatted = cleaned.match(/.{1,4}/g)?.join(" ") || "";
     return formatted.slice(0, 19);
   };
 
   const formatExpiryDate = (text: string) => {
-    const cleaned = text.replace(/\D/g, '');
+    const cleaned = text.replace(/\D/g, "");
     if (cleaned.length >= 2) {
-      return cleaned.slice(0, 2) + '/' + cleaned.slice(2, 4);
+      return cleaned.slice(0, 2) + "/" + cleaned.slice(2, 4);
     }
     return cleaned;
   };
@@ -41,12 +41,15 @@ export default function AddPaymentScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.container}
       >
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backButton}
+          >
             <Ionicons name="arrow-back" size={24} color="black" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Add Payment Method</Text>
@@ -117,21 +120,21 @@ export default function AddPaymentScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: "#E0E0E0",
   },
   backButton: {
     marginRight: 16,
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   content: {
     flex: 1,
@@ -143,33 +146,33 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     marginBottom: 8,
-    color: '#333',
+    color: "#333",
   },
   input: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: "#E0E0E0",
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
   },
   row: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: 20,
   },
   footer: {
     padding: 16,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: "#E0E0E0",
   },
   saveButton: {
-    backgroundColor: '#000',
+    backgroundColor: "#000",
     padding: 16,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
   },
   saveButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });

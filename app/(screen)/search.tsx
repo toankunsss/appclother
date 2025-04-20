@@ -55,10 +55,18 @@ const FilterModal = memo(
         if (type === "price") {
           const newPriceRange = { ...prev.priceRange, ...value };
           // Ensure min is not greater than max
-          if (type === "price" && value.min && value.min > prev.priceRange.max) {
+          if (
+            type === "price" &&
+            value.min &&
+            value.min > prev.priceRange.max
+          ) {
             newPriceRange.max = value.min;
           }
-          if (type === "price" && value.max && value.max < prev.priceRange.min) {
+          if (
+            type === "price" &&
+            value.max &&
+            value.max < prev.priceRange.min
+          ) {
             newPriceRange.min = value.max;
           }
           return {

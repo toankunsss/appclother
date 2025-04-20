@@ -294,14 +294,15 @@ export const getProductsByPriceRange = async (minPrice, maxPrice) => {
 // Update product search function
 export const searchProductsByQuery = async (query) => {
   try {
-    const response = await BASE_URL.get('/products');
+    const response = await BASE_URL.get("/products");
     const searchQuery = query.toLowerCase();
-    
-    const filteredProducts = response.data.filter(product =>
-      product.name.toLowerCase().includes(searchQuery) ||
-      product.description.toLowerCase().includes(searchQuery)
+
+    const filteredProducts = response.data.filter(
+      (product) =>
+        product.name.toLowerCase().includes(searchQuery) ||
+        product.description.toLowerCase().includes(searchQuery)
     );
-    
+
     return filteredProducts;
   } catch (error) {
     console.error("Error searching products:", error);
@@ -311,22 +312,23 @@ export const searchProductsByQuery = async (query) => {
 
 export const searchProductsWithFilters = async (query, filters) => {
   try {
-    const response = await BASE_URL.get('/products');
+    const response = await BASE_URL.get("/products");
     let filteredProducts = response.data;
 
     // Text search
     if (query) {
       const searchQuery = query.toLowerCase();
-      filteredProducts = filteredProducts.filter(product => 
-        product.name.toLowerCase().includes(searchQuery) ||
-        product.description.toLowerCase().includes(searchQuery)
+      filteredProducts = filteredProducts.filter(
+        (product) =>
+          product.name.toLowerCase().includes(searchQuery) ||
+          product.description.toLowerCase().includes(searchQuery)
       );
     }
 
     // Price range filter
     if (filters.priceRange) {
       const { min, max } = filters.priceRange;
-      filteredProducts = filteredProducts.filter(product => {
+      filteredProducts = filteredProducts.filter((product) => {
         const price = parseFloat(product.sale_price);
         return price >= min && price <= max;
       });
@@ -334,13 +336,13 @@ export const searchProductsWithFilters = async (query, filters) => {
 
     // Category filter
     if (filters.category) {
-      filteredProducts = filteredProducts.filter(product =>
-        product.category_id.toString() === filters.category
+      filteredProducts = filteredProducts.filter(
+        (product) => product.category_id.toString() === filters.category
       );
     }
 
-    console.log('Price range:', filters.priceRange);
-    console.log('Filtered products:', filteredProducts);
+    console.log("Price range:", filters.priceRange);
+    console.log("Filtered products:", filteredProducts);
     return filteredProducts;
   } catch (error) {
     console.error("Error searching products:", error);
