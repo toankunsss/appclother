@@ -380,3 +380,103 @@ export const addOrderItemAPI = async (orderItemData) => {
     throw error;
   }
 };
+
+// Get addresses by user ID
+export const getAddressesByUserId = async (userId) => {
+  try {
+    const response = await BASE_URL.get(`/addresses?userId=${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching addresses:", error);
+    return [];
+  }
+};
+
+// Add new address
+export const addAddressAPI = async (addressData) => {
+  try {
+    const response = await BASE_URL.post("/addresses", {
+      userId: addressData.userId,
+      name: addressData.name,
+      phone: addressData.phone,
+      address: addressData.address,
+      isDefault: addressData.isDefault || false,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error adding address:", error);
+    throw error;
+  }
+};
+
+// Update address
+export const updateAddressAPI = async (addressId, addressData) => {
+  try {
+    const response = await BASE_URL.put(`/addresses/${addressId}`, addressData);
+    return response.data;
+  } catch (error) {
+    console.error("Error updating address:", error);
+    throw error;
+  }
+};
+
+// Delete address
+export const deleteAddressAPI = async (addressId) => {
+  try {
+    await BASE_URL.delete(`/addresses/${addressId}`);
+    return true;
+  } catch (error) {
+    console.error("Error deleting address:", error);
+    throw error;
+  }
+};
+
+// Get orders by user ID
+export const getOrdersByUserId = async (userId) => {
+  try {
+    const response = await BASE_URL.get(`/orders?user_id=${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    return [];
+  }
+};
+
+// Get order items by order ID
+export const getOrderItemsByOrderId = async (orderId) => {
+  try {
+    const response = await BASE_URL.get(`/order_items?order_id=${orderId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching order items:", error);
+    return [];
+  }
+};
+
+// Get all orders with their items
+export const getOrdersWithItems = async (userId) => {
+  try {
+    const orders = await getOrdersByUserId(userId);
+    const ordersWithItems = await Promise.all(
+      orders.map(async (order) => {
+        const items = await getOrderItemsByOrderId(order.id);
+        const enrichedItems = await Promise.all(
+          items.map(async (item) => {
+            const product = await getProductById(item.product_id);
+            return {
+              ...item,
+              product_name: product?.name || "Unknown Product",
+              product_image:
+                product?.images?.[0] || "https://via.placeholder.com/100",
+            };
+          })
+        );
+        return { ...order, items: enrichedItems };
+      })
+    );
+    return ordersWithItems;
+  } catch (error) {
+    console.error("Error fetching orders with items:", error);
+    return [];
+  }
+};

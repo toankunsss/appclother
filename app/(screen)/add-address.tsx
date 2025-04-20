@@ -6,55 +6,47 @@ import {
   TextInput,
   Alert,
   ScrollView,
-  FlatList,
 } from "react-native";
 import React, { useState } from "react";
 import { useRouter } from "expo-router";
 import Ionicons from "react-native-vector-icons/Ionicons";
+import { useAddress } from "../../context/addressContext";
+import { useAuth } from "@/context/contextAuth";
 
 const AddAddress = () => {
   const router = useRouter();
+  const { user } = useAuth();
+  const { addAddress } = useAddress();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
-  const [query, setQuery] = useState("");
-  const [suggestions, setSuggestions] = useState([]);
+  const [isDefault, setIsDefault] = useState(false);
 
-  const fetchAddressSuggestions = async (text: string) => {
-    setQuery(text);
-    setAddress(text); // update visible input
-    if (text.length < 3) {
-      setSuggestions([]);
-      return;
-    }
-
-    try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
-          text
-        )}&format=json&addressdetails=1&limit=5`
-      );
-      const data = await res.json();
-      setSuggestions(data);
-    } catch (err) {
-      console.error("Address fetch error:", err);
-    }
-  };
-
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name || !phone || !address) {
       Alert.alert("Please fill in all fields.");
       return;
     }
 
-    // Normally you'd send data to your API or state here.
-    Alert.alert("Address saved!", `${name}, ${phone}, ${address}`);
-    router.back(); // Go back to address list
+    try {
+      await addAddress({
+        userId: user.uid,
+        name,
+        phone,
+        address,
+        isDefault,
+      });
+      Alert.alert("Success", "Address saved successfully!", [
+        { text: "OK", onPress: () => router.back() },
+      ]);
+    } catch (error) {
+      console.error("Error saving address:", error);
+      Alert.alert("Error", "Failed to save address. Please try again.");
+    }
   };
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="chevron-back" size={28} />
@@ -62,10 +54,7 @@ const AddAddress = () => {
         <Text style={styles.headerTitle}>Add New Address</Text>
       </View>
 
-      <ScrollView
-        contentContainerStyle={styles.form}
-        keyboardShouldPersistTaps="handled"
-      >
+      <ScrollView contentContainerStyle={styles.form}>
         <Text style={styles.label}>Full Name</Text>
         <TextInput
           style={styles.input}
@@ -85,29 +74,22 @@ const AddAddress = () => {
 
         <Text style={styles.label}>Address</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { height: 80 }]}
           value={address}
-          onChangeText={fetchAddressSuggestions}
-          placeholder="Search your address"
+          onChangeText={setAddress}
+          placeholder="Enter your address"
+          multiline
         />
 
-        {suggestions.length > 0 && (
-          <FlatList
-            data={suggestions}
-            keyExtractor={(item) => item.place_id.toString()}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.suggestionItem}
-                onPress={() => {
-                  setAddress(item.display_name);
-                  setSuggestions([]);
-                }}
-              >
-                <Text>{item.display_name}</Text>
-              </TouchableOpacity>
-            )}
-          />
-        )}
+        <TouchableOpacity
+          style={styles.defaultCheck}
+          onPress={() => setIsDefault(!isDefault)}
+        >
+          <View style={[styles.checkbox, isDefault && styles.checkboxChecked]}>
+            {isDefault && <Ionicons name="checkmark" size={16} color="#fff" />}
+          </View>
+          <Text style={styles.checkboxLabel}>Set as default address</Text>
+        </TouchableOpacity>
 
         <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
           <Text style={styles.saveButtonText}>Save Address</Text>
@@ -154,12 +136,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
     backgroundColor: "#fafafa",
   },
-  suggestionItem: {
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-    backgroundColor: "#f9f9f9",
-  },
   saveButton: {
     backgroundColor: "#007aff",
     padding: 15,
@@ -171,5 +147,27 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "500",
+  },
+  defaultCheck: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 20,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderWidth: 2,
+    borderColor: "#007aff",
+    borderRadius: 4,
+    marginRight: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  checkboxChecked: {
+    backgroundColor: "#007aff",
+  },
+  checkboxLabel: {
+    fontSize: 16,
+    color: "#333",
   },
 });

@@ -5,17 +5,29 @@ import {
   TouchableOpacity,
   Image,
   Modal,
+  Platform,
+  Alert,
 } from "react-native";
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import FontAwesome6 from "react-native-vector-icons/FontAwesome6";
 import { Link, useRouter, useLocalSearchParams } from "expo-router";
 import Ionicons from "react-native-vector-icons/Ionicons";
+import * as Notifications from "expo-notifications";
 import { papal, visa, maestro } from "@/contants/image/img";
 import { useCart } from "@/context/contexCart";
 import { useAuth } from "@/context/contextAuth";
 import { NotificationContext } from "@/context/contextNotification";
 import { check } from "@/contants/image/img";
 import { addOrderAPI, addOrderItemAPI } from "@/api/api";
+
+// Cấu hình notification handler
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 const CheckPayment = () => {
   const router = useRouter();
@@ -27,8 +39,42 @@ const CheckPayment = () => {
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
+  useEffect(() => {
+    registerForPushNotifications();
+  }, []);
+
+  const registerForPushNotifications = async () => {
+    try {
+      const { status } = await Notifications.requestPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Permission needed",
+          "Please enable notifications to receive order updates."
+        );
+        return;
+      }
+    } catch (error) {
+      console.log("Error getting push token:", error);
+    }
+  };
+
   const handlePress = (paymentType: any) => {
     setSelectedPayment(paymentType);
+  };
+
+  const showPaymentNotification = async (total, items) => {
+    try {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: "🎉 Payment Successful!",
+          body: `Your order of $${total} has been confirmed.\nItems: ${items.length} products`,
+          data: { total, items },
+        },
+        trigger: null, // Shows immediately
+      });
+    } catch (error) {
+      console.error("Error showing notification:", error);
+    }
   };
 
   const handlePayment = async () => {
@@ -85,6 +131,8 @@ const CheckPayment = () => {
         total: parseFloat(total).toFixed(2),
         timestamp: new Date().toISOString(),
       });
+
+      await showPaymentNotification(total, purchasedItems);
 
       // Hiển thị modal thành công
       setShowSuccessModal(true);

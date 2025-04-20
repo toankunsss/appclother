@@ -5,7 +5,7 @@
     "owner": "vantoankunsss",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "",
+    "icon": "./assets/icon.png",
     "scheme": "com.yourapp.auth",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -16,7 +16,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "",
+        "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.anonymousssss.clotherApp",

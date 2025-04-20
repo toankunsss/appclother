@@ -78,6 +78,25 @@ const FilterModal = memo(
       });
     }, []);
 
+    const handleApply = () => {
+      const validatedFilters = {
+        ...localFilters,
+        priceRange: {
+          min: Number(localFilters.priceRange.min) || 0,
+          max: Number(localFilters.priceRange.max) || 1000,
+        },
+      };
+
+      console.log("=== Filter Application ===");
+      console.log("Applied Filters:", {
+        priceRange: `$${validatedFilters.priceRange.min} - $${validatedFilters.priceRange.max}`,
+        category: validatedFilters.category || "All",
+        size: validatedFilters.size || "All",
+      });
+
+      onApply(validatedFilters);
+    };
+
     return (
       <Modal
         visible={visible}
@@ -188,7 +207,7 @@ const FilterModal = memo(
               {/* Apply Button */}
               <TouchableOpacity
                 style={styles.applyButton}
-                onPress={() => onApply(localFilters)}
+                onPress={handleApply}
               >
                 <Text style={styles.applyButtonText}>Apply Filters</Text>
               </TouchableOpacity>
@@ -290,6 +309,21 @@ export default function SearchScreen() {
     }
   };
 
+  const removeRecentSearch = async (searchToRemove: string) => {
+    try {
+      const updatedSearches = recentSearches.filter(
+        (search) => search !== searchToRemove
+      );
+      setRecentSearches(updatedSearches);
+      await AsyncStorage.setItem(
+        "recentSearches",
+        JSON.stringify(updatedSearches)
+      );
+    } catch (error) {
+      console.error("Error removing recent search:", error);
+    }
+  };
+
   const handleSearch = async (searchText: any) => {
     setText(searchText);
     await saveSearch(searchText);
@@ -305,29 +339,55 @@ export default function SearchScreen() {
 
   useEffect(() => {
     const fetchProducts = async () => {
-      if (text.trim() === "") {
-        setProducts([]);
-        return;
-      }
+      if (!filters || !filters.priceRange) return;
+
       setLoading(true);
       try {
         const data = await searchProductsWithFilters(text, filters);
+        console.log("Search Results:", {
+          query: text,
+          priceRange: `$${filters.priceRange.min} - $${filters.priceRange.max}`,
+          resultsCount: data.length,
+          results: data.map((item) => ({
+            name: item.name,
+            price: item.sale_price,
+            category: item.category_id,
+          })),
+        });
+
         setProducts(data);
       } catch (error) {
-        console.error("Lỗi khi tìm kiếm:", error);
+        console.error("Search error:", error);
         setProducts([]);
       } finally {
         setLoading(false);
       }
     };
+
     fetchProducts();
   }, [text, filters]);
 
-  const handleApplyFilters = useCallback((newFilters: any) => {
-    setFilters(newFilters);
-    setShowFilterModal(false);
-    showToast("Filters applied successfully");
-  }, []);
+  const handleApplyFilters = useCallback(
+    (newFilters: any) => {
+      const validatedFilters = {
+        ...newFilters,
+        priceRange: {
+          min: Number(newFilters.priceRange?.min) || 0,
+          max: Number(newFilters.priceRange?.max) || 1000,
+        },
+      };
+
+      console.log("Search Filters:", {
+        text: text || "No search text",
+        priceRange: `$${validatedFilters.priceRange.min} - $${validatedFilters.priceRange.max}`,
+        category: validatedFilters.category || "All categories",
+      });
+
+      setFilters(validatedFilters);
+      setShowFilterModal(false);
+    },
+    [text]
+  );
 
   const handleCloseModal = useCallback(() => {
     setShowFilterModal(false);
@@ -375,14 +435,21 @@ export default function SearchScreen() {
         <View style={styles.recentSearches}>
           <Text style={styles.recentSearchesTitle}>Recent Searches</Text>
           {recentSearches.map((search, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.recentSearchItem}
-              onPress={() => handleSearch(search)}
-            >
-              <Feather name="clock" size={16} color="#666" />
-              <Text style={styles.recentSearchText}>{search}</Text>
-            </TouchableOpacity>
+            <View key={index} style={styles.recentSearchItem}>
+              <TouchableOpacity
+                style={styles.recentSearchContent}
+                onPress={() => handleSearch(search)}
+              >
+                <Feather name="clock" size={16} color="#666" />
+                <Text style={styles.recentSearchText}>{search}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => removeRecentSearch(search)}
+                style={styles.deleteButton}
+              >
+                <Feather name="x" size={16} color="#666" />
+              </TouchableOpacity>
+            </View>
           ))}
         </View>
       )}
@@ -576,12 +643,21 @@ const styles = StyleSheet.create({
   recentSearchItem: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
     paddingVertical: 8,
+  },
+  recentSearchContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
     gap: 10,
   },
   recentSearchText: {
     fontSize: 14,
     color: "#666",
+  },
+  deleteButton: {
+    padding: 5,
   },
   productCard: {
     backgroundColor: "#fff",
