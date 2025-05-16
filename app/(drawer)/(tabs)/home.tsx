@@ -6,9 +6,10 @@ import {
   TouchableOpacity,
   FlatList,
   Dimensions,
+  ActivityIndicator,
 } from "react-native";
 import React, { useEffect, useState, useRef } from "react";
-import { ScrollView } from "react-native-gesture-handler";
+import { ScrollView, RefreshControl } from "react-native-gesture-handler";
 import { getCategories, getProducts } from "@/api/api";
 import PostSale from "@/component/postSale";
 import TimerBox from "@/component/TimerBox";
@@ -66,6 +67,7 @@ const Home = () => {
   const [categories, setCategories] = useState<CategoryType[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
   const [timerBox, setTimerBox] = useState({
     house: 23,
     minute: 59,
@@ -78,22 +80,30 @@ const Home = () => {
   const flatListRef = useRef<FlatList>(null);
 
   // Lấy dữ liệu ban đầu
+  const fetchData = async () => {
+    try {
+      const categoriesData = await getCategories();
+      const productsData = await getProducts();
+      setCategories(categoriesData);
+      setProducts(productsData);
+      setFilteredProducts(productsData);
+      setLoading(false);
+    } catch (error) {
+      console.error("Lỗi khi lấy dữ liệu:", error);
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const categoriesData = await getCategories();
-        const productsData = await getProducts();
-        setCategories(categoriesData);
-        setProducts(productsData);
-        setFilteredProducts(productsData);
-        setLoading(false);
-      } catch (error) {
-        console.error("Lỗi khi lấy dữ liệu:", error);
-        setLoading(false);
-      }
-    };
     fetchData();
   }, []);
+
+  // Lazy load khi kéo xuống làm mới
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchData();
+    setRefreshing(false);
+  };
 
   // Lọc sản phẩm khi danh mục được chọn
   useEffect(() => {
@@ -108,8 +118,11 @@ const Home = () => {
   }, [selectedCategory, products]);
 
   // Xử lý khi nhấn vào danh mục
-  const handleCategoryPress = (categoryId: number) => {
-    setSelectedCategory(categoryId === selectedCategory ? null : categoryId);
+  const handleCategoryPress = (categoryId: number, categoryName: string) => {
+    router.push({
+      pathname: "/(screen)/CategoryProducts",
+      params: { categoryId, categoryName },
+    });
   };
 
   // Xử lý khi nhấn vào sản phẩm
@@ -166,14 +179,24 @@ const Home = () => {
 
   if (loading) {
     return (
-      <View style={styles.container}>
-        <Text>Đang tải...</Text>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.7)' }}>
+          <ActivityIndicator size="large" color="#F83758" />
       </View>
     );
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={["#F83758"]}
+          tintColor="#F83758"
+        />
+      }
+    >
       {/* Danh mục */}
       <ScrollView
         horizontal
@@ -187,7 +210,7 @@ const Home = () => {
               styles.categoriesItem,
               selectedCategory === item.category_id && styles.selectedCategory,
             ]}
-            onPress={() => handleCategoryPress(item.category_id)}
+            onPress={() => handleCategoryPress(item.category_id, item.name)}
           >
             <Image source={{ uri: item.img_URI }} style={styles.imageStyle} />
             <Text style={styles.textCategory}>{item.name}</Text>
@@ -231,17 +254,18 @@ const Home = () => {
             decelerationRate="fast"
             snapToInterval={WIDTH}
             renderItem={({ item }) => (
-              <View style={{ width: WIDTH }}>
-                <PostSale
-                  img={item.img}
-                  sale_off={item.sale_off}
-                  describe={item.describe}
-                />
-              </View>
+              <PostSale
+                img={item.img}
+                sale_off={item.sale_off}
+                describe={item.describe}
+              />
             )}
             keyExtractor={(item) => item.sale_off}
             onScroll={handleScroll}
-            contentContainerStyle={{ marginBottom: 10 }}
+            contentContainerStyle={{
+              marginBottom: 10,
+              paddingHorizontal: 0,
+            }}
           />
           <View style={{ flexDirection: "row", justifyContent: "center" }}>
             {postImages.map((_, index) => (
@@ -272,7 +296,7 @@ const Home = () => {
             renderItem={({ item }) => (
               <TouchableOpacity
                 style={{ width: "47%" }}
-                onPress={() => handleProductPress(item.product_id.toString())}
+                onPress={() => handleProductPress(item.id.toString())}
               >
                 <Product product={item} />
               </TouchableOpacity>
@@ -298,7 +322,7 @@ export default Home;
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 15,
+    paddingHorizontal: 5,
   },
   imageStyle: {
     width: 56,

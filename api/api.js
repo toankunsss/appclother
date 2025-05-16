@@ -1,3 +1,89 @@
+// Thêm notification mới cho user
+export const addNotification = async (notificationData) => {
+  try {
+    const response = await BASE_URL.post("/notification", notificationData);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi thêm notification:", error);
+    throw error;
+  }
+};
+
+// Lấy danh sách notification của user
+export const getNotificationsByUserId = async (user_id) => {
+  try {
+    const response = await BASE_URL.get(`/notification?user_id=${user_id}`);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi lấy notification:", error);
+    return [];
+  }
+};
+// Cập nhật trạng thái isSelected cho địa chỉ (chọn 1, bỏ chọn các địa chỉ khác của user)
+export const selectAddress = async (user_id, selected_id) => {
+  try {
+    // Lấy tất cả địa chỉ của user
+    const res = await BASE_URL.get(`/address?user_id=${user_id}`);
+    const addresses = res.data;
+    // Cập nhật từng địa chỉ: địa chỉ được chọn thì isSelected=true, còn lại false
+    await Promise.all(addresses.map(addr => {
+      return BASE_URL.put(`/address/${addr.id}`, {
+        ...addr,
+        isSelected: addr.id === selected_id
+      });
+    }));
+    return true;
+  } catch (error) {
+    console.error("Lỗi khi cập nhật isSelected:", error);
+    return false;
+  }
+};
+// Xóa địa chỉ theo id
+export const deleteAddressById = async (id) => {
+  try {
+    const response = await BASE_URL.delete(`/address/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi xóa địa chỉ:", error);
+    throw error;
+  }
+};
+
+// Cập nhật địa chỉ theo id
+export const updateAddressById = async (id, addressData) => {
+  try {
+    const response = await BASE_URL.put(`/address/${id}`, addressData);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi cập nhật địa chỉ:", error);
+    throw error;
+  }
+};
+// Thêm địa chỉ mới cho user
+export const addAddressForUser = async (addressData) => {
+  try {
+    const response = await BASE_URL.post("/address", addressData);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi thêm địa chỉ mới:", error);
+    throw error;
+  }
+};
+// Lấy danh sách địa chỉ của user theo user_id
+export const getAddressesByUserId = async (user_id) => {
+  try {
+    const response = await BASE_URL.get(`/address?user_id=${user_id}`);
+    // Lọc lại cho chắc chắn đúng user_id
+    const addresses = response.data.filter(addr => addr.user_id === user_id);
+    if (addresses.length === 0) {
+      return { message: "Bạn chưa có địa chỉ nào. Vui lòng thêm địa chỉ mới.", addresses: [] };
+    }
+    return { addresses };
+  } catch (error) {
+    console.error("Lỗi khi lấy danh sách địa chỉ:", error);
+    return { message: "Không thể lấy danh sách địa chỉ.", addresses: [] };
+  }
+};
 import BASE_URL from "./axiosConfig";
 
 // Get all products

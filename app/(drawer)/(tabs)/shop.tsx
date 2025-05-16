@@ -80,12 +80,6 @@ export default function Shop() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={{ position: "absolute", left: 0, top: 10 }}
-        >
-          <Ionicons name="chevron-back" size={28} />
-        </TouchableOpacity>
         <Text style={styles.headerTitle}>Shopping Cart</Text>
       </View>
       <View style={{ justifyContent: "space-between", flex: 1 }}>
@@ -148,7 +142,6 @@ export default function Shop() {
             )}
           />
         </View>
-        <Text>{selectedItems}</Text>
         {selectedItems.length > 0 && (
           <Procceed
             total={totalAmount.toFixed(2)}

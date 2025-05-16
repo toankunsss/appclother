@@ -24,9 +24,10 @@ const PostLack = () => {
           justifyContent: "center",
           alignItems: "flex-end",
           paddingRight: 15,
+          overflow: "hidden",
         }}
-        imageStyle={{ borderRadius: 10 }}
-        resizeMode="stretch"
+        imageStyle={{ borderRadius: 10, resizeMode: 'cover' }}
+        resizeMode="cover"
       >
         <View style={{ alignItems: "center" }}>
           <Text

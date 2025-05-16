@@ -59,7 +59,7 @@ const Procceed = ({ ship, total, procceed }: any) => {
       </View>
       <View style={styles.row}>
         <Text>Shipping</Text>
-        <Text>${ship}</Text>
+        <Text>$0{ship}</Text>
       </View>
       <View style={{ borderWidth: 1 }} />
       <View style={styles.row}>

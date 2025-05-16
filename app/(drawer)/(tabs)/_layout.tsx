@@ -1,8 +1,14 @@
 import { Tabs } from "expo-router";
 import Feather from "react-native-vector-icons/Feather";
-import { View } from "react-native";
+import { View, Text } from "react-native";
+import { useCart } from "@/context/contexCart";
+import { useNotification } from "@/context/NotificationContext";
 
 export default function TabLayout() {
+  const { cartItems } = useCart();
+  // Đếm số sản phẩm khác nhau (không cộng quantity)
+  const cartCount = cartItems.length;
+  const { unreadCount } = useNotification();
   return (
     <Tabs
       screenOptions={({ route }) => ({
@@ -31,8 +37,8 @@ export default function TabLayout() {
             case "shop":
               iconName = "shopping-cart";
               break;
-            case "search":
-              iconName = "search";
+            case "notification":
+              iconName = "bell";
               break;
             case "setting":
               iconName = "settings";
@@ -41,7 +47,7 @@ export default function TabLayout() {
               break;
           }
 
-          // Tạo icon cho tab "shop" có viền tròn xung quanh
+          // Tạo icon cho tab "shop" có viền tròn xung quanh và badge số lượng
           if (route.name === "shop") {
             return (
               <View
@@ -49,7 +55,7 @@ export default function TabLayout() {
                   width: 60,
                   height: 60,
                   borderRadius: 30,
-                  backgroundColor: focused ? "#EB3030" : "#FFFFFF", // Chuyển màu nền khi chọn
+                  backgroundColor: focused ? "#EB3030" : "#FFFFFF",
                   justifyContent: "center",
                   alignItems: "center",
                   top: 2,
@@ -61,20 +67,60 @@ export default function TabLayout() {
                   size={size}
                   color={focused ? "#FFFFFF" : "#000000"}
                 />
+                {cartCount > 0 && (
+                  <View
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      right: 0,
+                      backgroundColor: "#EB3030",
+                      borderRadius: 10,
+                      minWidth: 20,
+                      height: 20,
+                      justifyContent: "center",
+                      alignItems: "center",
+                      zIndex: 10,
+                    }}
+                  >
+                    <Text style={{ color: "#fff", fontSize: 12, fontWeight: "bold" }}>{cartCount}</Text>
+                  </View>
+                )}
               </View>
             );
           }
 
           // Các tab khác với màu sắc bình thường
           const iconColor = focused ? "#EB3030" : "#000000";
-          return <Feather name={iconName} size={size} color={iconColor} />;
+          return (
+            <View>
+              <Feather name={iconName} size={size} color={iconColor} />
+              {route.name === "notification" && unreadCount > 0 && (
+                <View
+                  style={{
+                    position: "absolute",
+                    top: -4,
+                    right: -8,
+                    backgroundColor: "#EB3030",
+                    borderRadius: 10,
+                    minWidth: 18,
+                    height: 18,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    zIndex: 10,
+                  }}
+                >
+                  <Text style={{ color: "#fff", fontSize: 11, fontWeight: "bold" }}>{unreadCount}</Text>
+                </View>
+              )}
+            </View>
+          );
         },
       })}
     >
       <Tabs.Screen name="home" options={{ title: "Home" }} />
       <Tabs.Screen name="Wishlist" options={{ title: "Wishlist" }} />
       <Tabs.Screen name="shop" options={{ title: "" }} />
-      <Tabs.Screen name="search" options={{ title: "Search" }} />
+      <Tabs.Screen name="notification" options={{ title: "Notifications" }} />
       <Tabs.Screen name="setting" options={{ title: "Settings" }} />
     </Tabs>
   );

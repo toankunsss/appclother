@@ -20,10 +20,10 @@ const images = [
 ];
 
 const Sponsored = () => {
-  const scrollRef = useRef(null);
+  const scrollRef = useRef<ScrollView>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const scrollIndex = (index) => {
+  const scrollIndex = (index: number) => {
     if (index >= 0 && index < images.length) {
       if (scrollRef.current) {
         scrollRef.current.scrollTo({

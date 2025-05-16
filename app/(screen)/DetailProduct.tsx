@@ -12,6 +12,8 @@ import { Link, useRouter, useLocalSearchParams } from "expo-router";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import FontAwesome6 from "react-native-vector-icons/FontAwesome6";
 import AddCart from "@/component/addCart";
+import { getCartByUserId } from "@/api/api";
+import { useAuth } from "@/context/contextAuth";
 import { getProductById } from "@/api/api";
 import {
   useSharedValue,
@@ -23,7 +25,13 @@ import { useAnimatedStyle } from "react-native-reanimated";
 const WIDTH = Dimensions.get("window").width;
 const HEIGHT = Dimensions.get("window").height;
 
-const CustomRating = ({ rating, maxStars = 5, starSize = 15 }) => {
+type CustomRatingProps = {
+  rating: number;
+  maxStars?: number;
+  starSize?: number;
+};
+
+const CustomRating = ({ rating, maxStars = 5, starSize = 15 }: CustomRatingProps) => {
   return (
     <View style={{ flexDirection: "row" }}>
       {[...Array(maxStars)].map((_, index) => {
@@ -56,8 +64,9 @@ const Viewshop = () => {
   const [imgActive, setImgActive] = useState(0);
   const params = useLocalSearchParams();
 
-  const [countCart, setCount] = useState(0);
-  const cartIconRef = useRef(null);
+  const [countCart, setCountCart] = useState(0);
+  const { user } = useAuth();
+  const cartIconRef = useRef<View>(null);
   const animatedY = useSharedValue(0);
   const animatedX = useSharedValue(0);
   const scale = useSharedValue(1);
@@ -90,6 +99,23 @@ const Viewshop = () => {
     opacity.value = withTiming(0, { duration: 500 });
   };
 
+  // Đếm số sản phẩm khác nhau trong giỏ hàng (không tính quantity)
+  const fetchCartCount = async () => {
+    if (!user?.uid) return;
+    try {
+      const cartData = await getCartByUserId(user.uid);
+      // Đếm số sản phẩm khác nhau (mỗi dòng là 1 sản phẩm, không cộng quantity)
+      setCountCart(cartData.length);
+    } catch (error) {
+      setCountCart(0);
+    }
+  };
+
+  useEffect(() => {
+    fetchCartCount();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
   const handleAddToCartSuccess = () => {
     setShowAnimBadge(true);
     cartIconRef.current?.measure(
@@ -113,15 +139,15 @@ const Viewshop = () => {
         animatedX.value = withSpring(px - 5, { damping: 12 });
         animatedY.value = withSpring(py - 5, { damping: 12 });
         scale.value = withTiming(0.5, { duration: 300 });
-        opacity.value = withTiming(0, {
-          duration: 300,
-          onCallback: () => {
-            setShowAnimBadge(false);
-          },
-        });
+        opacity.value = withTiming(0, { duration: 300 });
+        // Hide badge after animation completes
+        setTimeout(() => {
+          setShowAnimBadge(false);
+        }, 300);
       }
     );
-    setCount((prev) => prev + 1);
+    // Sau khi thêm vào giỏ hàng, cập nhật lại số sản phẩm khác nhau
+    fetchCartCount();
   };
 
   useEffect(() => {
@@ -446,7 +472,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 10,
     backgroundColor: "rgba(255, 255, 255, 0.7)",
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
     paddingVertical: 2,
     borderRadius: 12,
   },

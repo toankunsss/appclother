@@ -15,7 +15,7 @@ export default function DrawerLayout() {
   const { logout } = useAuth();
   const pathname = usePathname();
   // Các trang cần ẩn Drawer
-  const hiddenDrawerTabs = ["/search", "/setting", "/shop"];
+  const hiddenDrawerTabs = ["/search", "/setting", "/shop", "/notification", "/profile"];
   const [userData, setUserData] = useState({
     email: "",
     pincode: "",
@@ -44,37 +44,80 @@ export default function DrawerLayout() {
   }, []);
   const CustomDrawerContent = (props: any) => {
     return (
-      <>
-        <DrawerContentScrollView {...props}>
-          <View style={styles.userInforWrapper}>
-            <Image style={styles.imageInforWrapper} source={ggImag} />
-            <View style={styles.containerTextInforWrapper}>
-              <Text style={styles.textInforWrapper}>{userData.email}</Text>
+      <View style={{ flex: 1, backgroundColor: '#fff', borderTopRightRadius: 30, borderBottomRightRadius: 30, overflow: 'hidden' }}>
+        <DrawerContentScrollView {...props} contentContainerStyle={{ flexGrow: 1, paddingBottom: 0 }}>
+          {/* User Info */}
+          <View style={stylesV2.profileSection}>
+            <Image style={stylesV2.avatar} source={ggImag} />
+            <View style={{ marginLeft: 12 }}>
+              <Text style={stylesV2.name}>Sunie Pham</Text>
+              <Text style={stylesV2.email}>{userData.email || 'sunieux@gmail.com'}</Text>
             </View>
           </View>
-          <DrawerItem
-            icon={({ color, size }) => (
-              <Feather name="home" size={24} color={color} />
-            )}
-            label={"Home"}
-            onPress={() => {
-              router.replace("/(drawer)/(tabs)/home");
-            }}
-          />
+          {/* Main Menu */}
+          <View style={stylesV2.menuSection}>
+            <DrawerItem
+              icon={({ color, size }) => <Feather name="home" size={22} color={color} />}
+              label={() => <Text style={stylesV2.menuLabelActive}>Homepage</Text>}
+              style={stylesV2.menuItemActive}
+              onPress={() => router.replace("/(drawer)/(tabs)/home")}
+            />
+            <DrawerItem
+              icon={({ color, size }) => <Feather name="search" size={22} color={color} />}
+              label={() => <Text style={stylesV2.menuLabel}>Discover</Text>}
+              style={stylesV2.menuItem}
+              onPress={() => router.replace("/(drawer)/(tabs)/search")}
+            />
+            <DrawerItem
+              icon={({ color, size }) => <Feather name="shopping-bag" size={22} color={color} />}
+              label={() => <Text style={stylesV2.menuLabel}>My Order</Text>}
+              style={stylesV2.menuItem}
+              onPress={() => router.replace("/(drawer)/(tabs)/shop")}
+            />
+            <DrawerItem
+              icon={({ color, size }) => <Feather name="user" size={22} color={color} />}
+              label={() => <Text style={stylesV2.menuLabel}>My profile</Text>}
+              style={stylesV2.menuItem}
+              onPress={() => router.replace("/(screen)/profile")}
+            />
+          </View>
+          {/* Other Section */}
+          <Text style={stylesV2.otherTitle}>OTHER</Text>
+          <View style={stylesV2.menuSection}>
+            <DrawerItem
+              icon={({ color, size }) => <Feather name="settings" size={22} color={color} />}
+              label={() => <Text style={stylesV2.menuLabel}>Setting</Text>}
+              style={stylesV2.menuItem}
+              onPress={() => router.replace("/(drawer)/(tabs)/setting")}
+            />
+            <DrawerItem
+              icon={({ color, size }) => <Feather name="help-circle" size={22} color={color} />}
+              label={() => <Text style={stylesV2.menuLabel}>Support</Text>}
+              style={stylesV2.menuItem}
+              onPress={() => {}} // Thêm logic nếu có
+            />
+            <DrawerItem
+              icon={({ color, size }) => <Feather name="info" size={22} color={color} />}
+              label={() => <Text style={stylesV2.menuLabel}>About us</Text>}
+              style={stylesV2.menuItem}
+              onPress={() => {}} // Thêm logic nếu có
+            />
+          </View>
         </DrawerContentScrollView>
-        <View style={styles.containerFuntion}>
-          <DrawerItem
-            icon={({ color, size }) => (
-              <Feather name="log-out" size={24} color={color} />
-            )}
-            label={"Log Out"}
-            onPress={async () => {
-              await logout();
-              router.replace("/(auth)/sign-in"); // chuyển về trang login
-            }}
-          />
+        {/* Bottom Light/Dark Switch & Logout */}
+        <View style={stylesV2.bottomSection}>
+          <View style={stylesV2.themeSwitchContainer}>
+            <TouchableOpacity style={[stylesV2.themeButton, { backgroundColor: '#F6F6F6' }]}> 
+              <Feather name="sun" size={18} color="#000" />
+              <Text style={stylesV2.themeText}>Light</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[stylesV2.themeButton, { backgroundColor: '#fff' }]}> 
+              <Feather name="moon" size={18} color="#A8A8A9" />
+              <Text style={[stylesV2.themeText, { color: '#A8A8A9' }]}>Dark</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </>
+      </View>
     );
   };
   return (
@@ -95,34 +138,100 @@ export default function DrawerLayout() {
     />
   );
 }
-const styles = StyleSheet.create({
-  userInforWrapper: {
-    flexDirection: "row",
-    paddingHorizontal: 10,
-    paddingVertical: 20,
-    borderBottomColor: "#ccc",
-    borderBottomWidth: 1,
-    marginBottom: 10,
+const stylesV2 = StyleSheet.create({
+  profileSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 32,
+    paddingBottom: 18,
+    backgroundColor: '#fff',
   },
-  imageInforWrapper: {
-    width: 50,
-    height: 50,
-    borderRadius: 40,
+  avatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#F6F6F6',
   },
-  containerTextInforWrapper: {
-    marginLeft: 10,
-    justifyContent: "center",
-  },
-  textNameInforWrapper: {
+  name: {
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: 'bold',
+    color: '#222',
+    marginBottom: 2,
   },
-  textInforWrapper: {
-    color: "#ccc",
+  email: {
+    fontSize: 13,
+    color: '#A8A8A9',
   },
-  containerFuntion: {
-    marginBottom: 40,
-    borderTopColor: "#ccc",
+  menuSection: {
+    marginTop: 0,
+    marginBottom: 0,
+    backgroundColor: '#fff',
+  },
+  menuItem: {
+    borderRadius: 10,
+    marginHorizontal: 8,
+    marginVertical: 0,
+    paddingVertical: 0,
+    paddingHorizontal: 0,
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  menuItemActive: {
+    backgroundColor: '#F6F6F6',
+    borderRadius: 10,
+    marginHorizontal: 8,
+    marginVertical: 0,
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  menuLabel: {
+    fontSize: 15,
+    color: '#222',
+    fontWeight: '400',
+    marginLeft: -16,
+  },
+  menuLabelActive: {
+    fontSize: 15,
+    color: '#222',
+    fontWeight: 'bold',
+    marginLeft: -16,
+  },
+  otherTitle: {
+    fontSize: 12,
+    color: '#A8A8A9',
+    marginTop: 18,
+    marginBottom: 2,
+    marginLeft: 24,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+  },
+  bottomSection: {
+    padding: 16,
+    borderTopColor: '#F6F6F6',
     borderTopWidth: 1,
+    backgroundColor: '#fff',
+  },
+  themeSwitchContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#F6F6F6',
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 4,
+    marginBottom: 8,
+  },
+  themeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 16,
+  },
+  themeText: {
+    fontSize: 14,
+    marginLeft: 6,
+    color: '#222',
+    fontWeight: '500',
   },
 });

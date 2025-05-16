@@ -6,7 +6,7 @@ import {
   Pressable,
   TouchableOpacity,
 } from "react-native";
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
 import { ggImag, logo } from "@/contants/image/img";
 import React, { useState } from "react";
 import Feather from "react-native-vector-icons/Feather";
@@ -47,7 +47,7 @@ const Header = () => {
         </View>
       </View>
       <>
-        <View style={styles.containerSearch}>
+        <TouchableOpacity style={styles.containerSearch} onPress={() => {router.push("/(screen)/searchScreen")}}>
           <Feather name="search" size={15} color="#BBBBBB" />
           <TextInput
             placeholder="Search any Product..."
@@ -59,7 +59,7 @@ const Header = () => {
           <TouchableOpacity >
             <Feather name="mic" size={15} color="#BBBBBB" />
           </TouchableOpacity>
-        </View>
+        </TouchableOpacity>
         <View style={styles.containerFeather}>
           <Text style={{ fontWeight: "bold", fontSize: 18 }}>ALL Featured</Text>
           <View style={{ flexDirection: "row", gap: 15 }}>

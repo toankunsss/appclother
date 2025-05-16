@@ -13,23 +13,38 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import { papal, visa, maestro, appleImag } from "@/contants/image/img";
 import { useCart } from "@/context/contexCart";
 import { check } from "@/contants/image/img";
+import { useNotification } from "@/context/NotificationContext";
 const checkPayment = () => {
   const router = useRouter();
-  const { total, selectedItems } = useLocalSearchParams();
+  const { total, selectedItems, productNames } = useLocalSearchParams();
   const { removeFromCart } = useCart();
-  const parsedSelectedItems = selectedItems ? JSON.parse(selectedItems) : [];
+  const parsedSelectedItems =
+    typeof selectedItems === "string" ? JSON.parse(selectedItems) : [];
+  const parsedProductNames =
+    typeof productNames === "string" ? JSON.parse(productNames) : [];
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const handlePress = (paymentType: any) => {
     setSelectedPayment(paymentType);
   };
 
+  const { addNotification } = useNotification();
+  const user_id = "firebase-uid-1"; // Lấy user_id thực tế từ context/auth nếu có
   const handlePayment = () => {
     if (!selectedPayment) {
       alert("Please select a payment method");
       return;
     }
-    // Giả lập thanh toán thành công
+    // Tạo message chứa tên sản phẩm đã thanh toán
+    const productList = parsedProductNames.join(", ");
+    const message = `Bạn đã thanh toán: ${productList}`;
+    // Thêm notification mới
+    addNotification({
+      id: Date.now().toString(),
+      user_id,
+      message,
+      created_at: new Date().toISOString(),
+    });
     setShowSuccessModal(true);
   };
 
@@ -58,7 +73,7 @@ const checkPayment = () => {
       <View style={styles.cartDetail}>
         <View style={[styles.row]}>
           <Text style={styles.text}>Order</Text>
-          <Text style={styles.text}>{parseFloat(total) - 30}</Text>
+          <Text style={styles.text}>{parseFloat(total as string) - 30}</Text>
         </View>
         <View style={[styles.row]}>
           <Text style={styles.text}>Shipping</Text>

@@ -5,6 +5,7 @@ import {
   ScrollView,
   Alert,
   AlertButton,
+  ActivityIndicator,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -33,6 +34,8 @@ const Signup = () => {
   });
   const [isDisabled, setIsDisabled] = useState(true);
   const [error, setError] = useState("");
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -55,9 +58,16 @@ const Signup = () => {
   }, [form.password, form.confirm]);
 
   const handleSignup = async () => {
+    setIsSubmitted(true); // Đánh dấu rằng người dùng đã nhấn nút
+
+    if (!form.email || !form.password || form.password !== form.confirm) {
+      return; // Dừng lại nếu form không hợp lệ
+    }
+
     console.log("Form Data:", form);
 
     try {
+      setIsLoading(true); // Bắt đầu hiệu ứng loading
       console.log("Starting Firebase signup...");
       // Tạo tài khoản với Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(
@@ -89,18 +99,10 @@ const Signup = () => {
       const response = await registerUser(userData);
       console.log("User added to JSON Server:", response);
 
-      // Hiển thị thông báo đăng ký thành công
-      console.log("Showing success alert...");
-      Alert.alert(
-        "Đăng ký thành công",
-        "Chúc mừng! Bạn đã đăng ký tài khoản thành công. Vui lòng đăng nhập để tiếp tục.",
-        [
-          { text: "Đăng nhập ngay", onPress: () => router.push("/sign-in") },
-          { text: "OK", style: "cancel" },
-        ]
-      );
+      // Chuyển hướng trực tiếp đến trang signup-successfull
+      router.push("/signup-successfull");
     } catch (error: any) {
-      console.error("Signup failed with error:", error.code, error.message);
+      console.log("Signup failed with error:", error.code, error.message);
 
       // Xử lý các trường hợp lỗi cụ thể
       let errorMessage = "Đã có lỗi xảy ra khi đăng ký. Vui lòng thử lại!";
@@ -131,75 +133,103 @@ const Signup = () => {
       // Hiển thị thông báo lỗi
       console.log("Showing error alert...");
       Alert.alert("Đăng ký thất bại", errorMessage, buttons);
+    } finally {
+      setIsLoading(false); // Kết thúc hiệu ứng loading
     }
   };
 
   return (
     <SafeAreaView style={styles.fullcontainer}>
-      <ScrollView>
-        <View style={styles.container}>
-          <Text style={styles.title}>Create An{"\n"}Account</Text>
-
-          <FormField
-            title=""
-            value={form.email}
-            placeholder="Username or Email"
-            handldeChangeText={(value) =>
-              setForm({ ...form, email: value.nativeEvent.text })
-            }
-            otherStyles={styles.input}
-            keyboardType="email-address"
-          />
-
-          <FormField
-            title=""
-            value={form.password}
-            placeholder="Password"
-            handldeChangeText={(value) =>
-              setForm({ ...form, password: value.nativeEvent.text })
-            }
-            otherStyles={styles.input}
-            secureTextEntry={true}
-          />
-
-          <FormField
-            title=""
-            value={form.confirm}
-            placeholder="Confirm Password"
-            handldeChangeText={(value) =>
-              setForm({ ...form, confirm: value.nativeEvent.text })
-            }
-            otherStyles={styles.input}
-            secureTextEntry={true}
-          />
-
-          {error && <Text style={{ color: "red" }}>{error}</Text>}
-          <Text style={styles.param}>
-            By clicking the <Text style={styles.forgot}>Register </Text>button,
-            you agree{"\n"}to the public offer.
-          </Text>
-
-          <CustomButton
-            title="Create Account"
-            handleChangeText={handleSignup}
-            containerStyles={styles.buttonContainer}
-            TextStyles={styles.buttonText}
-            isLoading={isDisabled}
-          />
-
-          <Footer
-            title={<Text>I Already Have an Account</Text>}
-            hrefLink={
-              <Text
-                style={styles.loginLink}
-                onPress={() => router.push("/sign-in")}
-              >
-                Login
-              </Text>
-            }
-          />
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#F83758" />
         </View>
-      </ScrollView>
+      ) : (
+        <ScrollView>
+          <View style={styles.container}>
+            <Text style={styles.title}>Create An{"\n"}Account</Text>
+
+            <FormField
+              title="Email"
+              value={form.email}
+              placeholder="Email"
+              handldeChangeText={(value: any) =>
+                setForm({ ...form, email: value.nativeEvent.text })
+              }
+              otherStyles={styles.input}
+              keyboardType="email-address"
+            />
+            {isSubmitted && !form.email && (
+              <Text style={styles.errorText}>Email không được để trống!</Text>
+            )}
+            {isSubmitted && error === "auth/invalid-email" && (
+              <Text style={styles.errorText}>
+                Email không hợp lệ. Vui lòng kiểm tra lại!
+              </Text>
+            )}
+
+            <FormField
+              title="Password"
+              value={form.password}
+              placeholder="Password"
+              handldeChangeText={(value: any) =>
+                setForm({ ...form, password: value.nativeEvent.text })
+              }
+              otherStyles={styles.input}
+              secureTextEntry={true}
+            />
+            {isSubmitted && !form.password && (
+              <Text style={styles.errorText}>Mật khẩu không được để trống!</Text>
+            )}
+            {isSubmitted && error === "auth/weak-password" && (
+              <Text style={styles.errorText}>
+                Mật khẩu quá yếu. Vui lòng dùng mật khẩu mạnh hơn (tối thiểu 6 ký tự)!
+              </Text>
+            )}
+
+            <FormField
+              title="Confirm Password"
+              value={form.confirm}
+              placeholder="Confirm Password"
+              handldeChangeText={(value: any) =>
+                setForm({ ...form, confirm: value.nativeEvent.text })
+              }
+              otherStyles={styles.input}
+              secureTextEntry={true}
+            />
+            {isSubmitted && form.password !== form.confirm && form.confirm && (
+              <Text style={styles.errorText}>
+                Xác nhận mật khẩu không trùng khớp!
+              </Text>
+            )}
+
+            <Text style={styles.param}>
+              By clicking the <Text style={styles.forgot}>Register </Text>button,
+              you agree{"\n"}to the public offer.
+            </Text>
+
+            <CustomButton
+              title="Create Account"
+              handleChangeText={handleSignup}
+              containerStyles={styles.buttonContainer}
+              TextStyles={styles.buttonText}
+              isLoading={isDisabled}
+            />
+
+            <Footer
+              title={<Text>I Already Have an Account</Text>}
+              hrefLink={
+                <Text
+                  style={styles.loginLink}
+                  onPress={() => router.push("/sign-in")}
+                >
+                  Login
+                </Text>
+              }
+            />
+          </View>
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 };
@@ -267,5 +297,17 @@ const styles = StyleSheet.create({
   loginLink: {
     color: "red",
     textDecorationLine: "underline",
+  },
+  errorText: {
+    color: "red",
+    fontSize: 12,
+    alignSelf: "flex-start",
+    marginBottom: 10,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
   },
 });

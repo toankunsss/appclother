@@ -12,8 +12,8 @@ import { makeRedirectUri } from "expo-auth-session";
 WebBrowser.maybeCompleteAuthSession();
 
 interface FooterProps {
-  title: string;
-  hrefLink: string;
+  title: any;
+  hrefLink: any;
 }
 
 const Footer: React.FC<FooterProps> = ({ title, hrefLink }) => {

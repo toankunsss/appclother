@@ -12,12 +12,15 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import FontAwesome6 from "react-native-vector-icons/FontAwesome6";
 import { Link, useRouter } from "expo-router";
 import Address from "@/component/address";
+import { useAddress } from "@/context/contextAddress";
 import { useLocalSearchParams } from "expo-router";
 import { useCart } from "@/context/contexCart";
 
 const Payment = () => {
   const router = useRouter();
   const { cartItems } = useCart();
+  const { selectedAddress: addressObj } = useAddress();
+
   const { selectedItems, total } = useLocalSearchParams();
   const parsedSelectedItems =
     typeof selectedItems === "string" ? JSON.parse(selectedItems) : [];
@@ -26,12 +29,16 @@ const Payment = () => {
   const selectedCartItems = cartItems.filter((item) =>
     parsedSelectedItems.includes(item.cart_id)
   );
+  // Lấy danh sách tên sản phẩm đã chọn
+  const selectedProductNames = selectedCartItems.map((item) => item.name);
+
   const handleProceedToPayment = () => {
     router.push({
       pathname: "/(screen)/checkPayment",
       params: {
         selectedItems: JSON.stringify(parsedSelectedItems),
-        total: (parseFloat(total) + 30).toFixed(2), // Tổng giá trị bao gồm phí vận chuyển (30)
+        total: (parseFloat(Array.isArray(total) ? total[0] : total as string) + 30).toFixed(2), // Tổng giá trị bao gồm phí vận chuyển (30)
+        productNames: JSON.stringify(selectedProductNames),
       },
     });
   };
@@ -51,7 +58,7 @@ const Payment = () => {
       {/* Nội dung chính */}
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Address */}
-        <Address />
+        <Address selectedAddress={addressObj} />
 
         {/* Danh sách sản phẩm */}
         {selectedCartItems.map((item) => (
